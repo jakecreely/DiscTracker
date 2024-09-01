@@ -8,7 +8,8 @@ def initialise_database():
     cur.execute('''CREATE TABLE IF NOT EXISTS items (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT,
-                    cex_id TEXT UNIQUE,
+                    cex_id TEXT,
+                    sell_price REAL,
                     exchange_price REAL,
                     cash_price, REAL
                     last_checked DATE,
@@ -18,6 +19,7 @@ def initialise_database():
     cur.execute('''CREATE TABLE IF NOT EXISTS price_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     item_id INTEGER,
+                    sell_price REAL,
                     exchange_price REAL,
                     cash_price REAL,
                     date_checked DATE DEFAULT (DATE('now')),
@@ -30,15 +32,16 @@ def add_item(item):
     # check structure - contains title, cex_id, price
     title = item['boxDetails'][0]['boxName']
     cex_id = item['boxDetails'][0]['boxId']
+    sell_price = item['boxDetails'][0]['sellPrice']
     exchange_price = item['boxDetails'][0]['exchangePrice']
     cash_price = item['boxDetails'][0]['cashPrice']
     
     conn = sqlite3.connect(DATABASE_NAME)
     cur = conn.cursor()
     cur.execute('''
-                INSERT INTO items (title, cex_id, exchange_price, cash_price)
-                VALUES (?, ?, ?, ?)
-                ''', (title, cex_id, exchange_price, cash_price))
+                INSERT INTO items (title, cex_id, sell_price, exchange_price, cash_price)
+                VALUES (?, ?, ?, ?, ?)
+                ''', (title, cex_id, sell_price, exchange_price, cash_price))
     
     # Get the ID of the newly inserted record
     new_id = cur.lastrowid
@@ -48,9 +51,9 @@ def add_item(item):
     
     # Fetch the newly inserted record
     cur.execute('''
-            INSERT INTO price_history (item_id, exchange_price, cash_price)
-            VALUES (?, ?, ?)
-            ''', (new_id, exchange_price, cash_price))
+            INSERT INTO price_history (item_id, sell_price, exchange_price, cash_price)
+            VALUES (?, ?, ?, ?)
+            ''', (new_id, sell_price, exchange_price, cash_price))
     
     conn.commit()
     
@@ -65,22 +68,22 @@ def fetch_item_ids():
     conn.close()
     return [item_id[0] for item_id in ids]
 
-def update_price_in_database(item_id, new_cash_price, new_exchange_price):
+def update_price_in_database(item_id, new_sell_price, new_cash_price, new_exchange_price):
     # Update the database with new price
     conn = sqlite3.connect(DATABASE_NAME)
     cur = conn.cursor()
     
-    cur.execute("UPDATE items SET cash_price = ? AND exchange_price = ? WHERE id = ?", (new_cash_price, new_exchange_price, item_id))
+    cur.execute("UPDATE items SET sell_price = ? AND cash_price = ? AND exchange_price = ? WHERE id = ?", (new_sell_price, new_cash_price, new_exchange_price, item_id))
     conn.commit()
     conn.close()
     
-def add_item_to_price_history(item_id, exchange_price, cash_price):
+def add_item_to_price_history(item_id, sell_price, exchange_price, cash_price):
     conn = sqlite3.connect(DATABASE_NAME)
     cur = conn.cursor()
     cur.execute('''
-            INSERT INTO price_history (item_id, exchange_price, cash_price)
-            VALUES (?, ?, ?)
-            ''', (item_id, exchange_price, cash_price))
+            INSERT INTO price_history (item_id, sell_price, exchange_price, cash_price)
+            VALUES (?, ?, ?, ?)
+            ''', (item_id, sell_price, exchange_price, cash_price))
     conn.commit()
     
 def remove_item_by_name(name):
