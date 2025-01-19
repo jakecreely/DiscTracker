@@ -1,4 +1,5 @@
-from DiscTracker.database import initialise_database, add_item
+from DiscTracker.database import add_item
+from DiscTracker.db_setup import initialise_database
 from DiscTracker.api import fetch_item
 from DiscTracker.price_checker_service import check_price_updates, generate_report
 

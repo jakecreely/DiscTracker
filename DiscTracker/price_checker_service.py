@@ -8,10 +8,10 @@ def check_price_updates():
     
     for item in items:
         # (1, 'Blu-ray', 12345, SELL_PRICE, 10.00, 5.00, '2024-09-01')
-        item_id = item[2]
-        current_sell_price = item[3]
-        current_exchange_price = item[4]
-        current_cash_price = item[5]
+        item_id = item.cex_id
+        current_sell_price = item.sell_price
+        current_exchange_price = item.exchange_price
+        current_cash_price = item.cash_price
         
         response = requests.get(f'https://wss2.cex.uk.webuy.io/v3/boxes/{item_id}/detail')
         if response.status_code == 200:
