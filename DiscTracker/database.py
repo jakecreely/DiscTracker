@@ -1,4 +1,5 @@
 import sqlite3
+import pandas as pd
 
 DATABASE_NAME = 'disc_tracker.db'
 
@@ -73,7 +74,20 @@ def update_price_in_database(item_id, new_sell_price, new_cash_price, new_exchan
     conn = sqlite3.connect(DATABASE_NAME)
     cur = conn.cursor()
     
-    cur.execute("UPDATE items SET sell_price = ? AND cash_price = ? AND exchange_price = ? WHERE id = ?", (new_sell_price, new_cash_price, new_exchange_price, item_id))
+    print(f"item_id:{item_id}")
+    print(f"sell_price:{new_sell_price}")
+    print(f"cash_price:{new_cash_price}")
+    print(f"exchange_price:{new_exchange_price}")
+
+    
+    cur.execute('''
+        UPDATE items 
+        SET 
+            sell_price = ?,
+            cash_price = ?,
+            exchange_price = ?
+        WHERE cex_id = ?
+        ''', (new_sell_price, new_cash_price, new_exchange_price, item_id))
     conn.commit()
     conn.close()
     
@@ -113,3 +127,42 @@ def get_all_items():
     items = cur.fetchall()
     conn.close()
     return items
+
+def fetch_price_changes(): 
+    conn = sqlite3.connect(DATABASE_NAME)
+    cur = conn.cursor()
+    
+    #         //items.last_checked AS current_last_checked_date, 
+    
+    cur.execute('''
+    SELECT 
+        items.id,
+        items.title,
+        items.sell_price AS current_sell_value,
+        items.cash_price AS current_sell_cash_value,
+        items.exchange_price AS current_sell_exchange_value,
+        price_history.sell_price AS previous_sell_value,
+        price_history.cash_price AS previous_sell_cash_value,
+        price_history.exchange_price AS previous_sell_exchange_value,
+        price_history.date_checked AS previous_sell_date,
+        (items.sell_price - price_history.sell_price) AS sell_value_change,
+        (items.cash_price - price_history.cash_price) AS sell_cash_value_change,
+        (items.exchange_price - price_history.exchange_price) AS sell_exchange_value_change
+    FROM 
+        items
+    JOIN 
+        price_history 
+    ON 
+        items.id = price_history.item_id
+    WHERE 
+        price_history.date_checked = (
+            SELECT MAX(date_checked) 
+            FROM price_history 
+            WHERE price_history.item_id = items.id
+        );
+    ''')
+    
+    results = cur.fetchall()
+    # Close the database connection
+    conn.close()
+    return results

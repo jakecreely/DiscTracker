@@ -1,12 +1,12 @@
 import requests
-from DiscTracker.database import get_all_items, update_price_in_database, add_item_to_price_history
+import pandas as pd
+from DiscTracker.database import get_all_items, update_price_in_database, add_item_to_price_history, fetch_price_changes
 
 def check_price_updates():
     # Fetch items - id and current price (cash and exchange)
     items = get_all_items()
     
     for item in items:
-        print(item)
         # (1, 'Blu-ray', 12345, SELL_PRICE, 10.00, 5.00, '2024-09-01')
         item_id = item[2]
         current_sell_price = item[3]
@@ -19,7 +19,7 @@ def check_price_updates():
             new_sell_price = data['boxDetails'][0]['sellPrice']
             new_cash_price = data['boxDetails'][0]['cashPrice']
             new_exchange_price = data['boxDetails'][0]['exchangePrice']
-            
+                        
             if new_cash_price and new_exchange_price is not None:
                 # If cash and exchange is both greater than current prices then update both
                 if new_cash_price > current_cash_price and new_exchange_price > current_exchange_price:
@@ -36,3 +36,15 @@ def check_price_updates():
                 print(f"Price not found for ID {item_id}")
         else:
             print(f"Failed to fetch data for ID {item_id}")
+
+def generate_report(): 
+    
+    results = fetch_price_changes()
+    
+    pd.set_option('display.max_rows', 100)  # Replace 100 with a number larger than your row count
+
+    # Execute the query and load the result into a Pandas DataFrame
+    df = pd.DataFrame(results)
+
+    # Print the DataFrame
+    print(df)

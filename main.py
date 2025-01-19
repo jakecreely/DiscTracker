@@ -1,6 +1,6 @@
 from DiscTracker.database import initialise_database, add_item
 from DiscTracker.api import fetch_item
-from DiscTracker.price_checker_service import check_price_updates
+from DiscTracker.price_checker_service import check_price_updates, generate_report
 
 if __name__ == "__main__":
     initialise_database()
@@ -8,8 +8,8 @@ if __name__ == "__main__":
     while True:
         print("\n1. Add An Item By CEX ID")
         print("2. View Current Prices")
-        print("5. Generate Price Change Report")
-        print("6. Exit")
+        print("3. Generate Price Change Report")
+        print("4. Exit")
         
         choice = input("Enter your choice: ")
         
@@ -18,6 +18,7 @@ if __name__ == "__main__":
             item = fetch_item(id)
             if item:
                 add_item(item)
+                print(item['boxDetails'][0]['boxName'])
         elif choice == '2':
             check_price_updates()
         elif choice == '3':
