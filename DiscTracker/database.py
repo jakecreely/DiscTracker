@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from sqlalchemy import text
 from DiscTracker.db_setup import Session
 from DiscTracker.models import Item, PriceHistory

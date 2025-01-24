@@ -41,10 +41,8 @@ def generate_report():
     
     results = fetch_price_changes()
     
-    pd.set_option('display.max_rows', 100)  # Replace 100 with a number larger than your row count
+    pd.set_option('display.max_rows', 100)
 
-    # Execute the query and load the result into a Pandas DataFrame
     df = pd.DataFrame(results)
 
-    # Print the DataFrame
     print(df)
