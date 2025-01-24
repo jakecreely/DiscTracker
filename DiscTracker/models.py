@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship, DeclarativeBase
+from datetime import datetime
 
 class Base(DeclarativeBase):
     pass
@@ -24,6 +25,6 @@ class PriceHistory(Base):
     sell_price = Column(Float, nullable=False)
     exchange_price = Column(Float, nullable=False)
     cash_price = Column(Float, nullable=False)
-    date_checked = Column(Date, default=None)
+    date_checked = Column(Date, default=datetime.now()) # Add timezone
 
     item = relationship('Item', back_populates='price_history')
