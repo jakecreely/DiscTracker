@@ -6,9 +6,9 @@
     </fieldset>
     <input type="submit" value="Add">
 </form>
-<form action="{% url 'discs:trigger-price-check' %}" method="post">
+<form action="{% url 'discs:update-item-prices' %}" method="post">
     {% csrf_token %}
-    <input type="submit" value="Trigger Price Check">
+    <input type="submit" value="Update Item Prices">
 </form>
 {% if items_list %}
     <ul>
