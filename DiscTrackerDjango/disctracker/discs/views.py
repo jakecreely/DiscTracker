@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render, get_object_or_404, get_list_or_40
 from datetime import datetime
 
 from .models import Item, PriceHistory
-from .services.cex import fetch_item
+from .services.cex import fetch_item, check_price_updates
 
 def index(request):
     items_list = Item.objects.all()
@@ -69,3 +69,7 @@ def add_item_from_cex(request):
         except Exception as e:
             print(f"Error while adding item from CEX API: {e}")
             #return redirect("add-item")
+            
+def update_item_prices(request):
+    check_price_updates()
+    return redirect("discs:index")

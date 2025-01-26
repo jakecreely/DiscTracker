@@ -11,4 +11,6 @@ urlpatterns = [
     path("price-history/<str:item_id>/", views.price_history, name="price-history"),
     
     path("add-item", views.add_item_from_cex, name="add-item"),
+    
+    path("update-item-prices", views.update_item_prices, name="update-item-prices")
 ]
