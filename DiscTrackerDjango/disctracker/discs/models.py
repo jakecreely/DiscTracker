@@ -9,9 +9,6 @@ class Item(models.Model):
     cash_price = models.FloatField()
     last_checked = models.DateField()
 
-    # This creates the reverse relationship automatically
-    price_history = models.ForeignKey('PriceHistory', related_name='item_price_history', on_delete=models.CASCADE)
-
     def __str__(self):
         return self.title
 
