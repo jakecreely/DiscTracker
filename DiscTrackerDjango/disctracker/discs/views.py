@@ -11,7 +11,8 @@ def index(request):
 
 def detail(request, item_id):
     item = get_object_or_404(Item, pk=item_id)
-    return render(request, "discs/detail.html", {"item": item})
+    price_history = item.price_history.all()
+    return render(request, "discs/detail.html", {"item": item, "price_history": price_history})
 
 def price_history(request):
     price_history = get_list_or_404(PriceHistory)

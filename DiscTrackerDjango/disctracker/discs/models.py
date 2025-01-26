@@ -13,7 +13,7 @@ class Item(models.Model):
         return self.title
 
 class PriceHistory(models.Model):
-    item = models.ForeignKey(Item, related_name='price_history_items', on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, related_name='price_history', on_delete=models.CASCADE)
     sell_price = models.FloatField()
     exchange_price = models.FloatField()
     cash_price = models.FloatField()
