@@ -1,0 +1,17 @@
+<form action="{% url 'discs:add-item' %}" method="post">
+    {% csrf_token %}
+    <fieldset>
+        <label for="cex_id">CEX ID:</label>
+        <input type="text" name="cex_id" id="cex_id" placeholder="Enter CEX ID" required><br>
+    </fieldset>
+    <input type="submit" value="Add">
+</form>
+{% if items_list %}
+    <ul>
+    {% for item in items_list %}
+        <li><a href="{% url 'discs:detail' item.id %}">{{ item.title }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No items are available.</p>
+{% endif %}
