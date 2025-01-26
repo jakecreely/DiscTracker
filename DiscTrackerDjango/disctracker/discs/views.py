@@ -63,6 +63,8 @@ def add_item_from_cex(request):
                 date_checked=datetime.now(),
             )
             
+            return redirect("discs:index")
+            
         except Exception as e:
             print(f"Error while adding item from CEX API: {e}")
             #return redirect("add-item")
