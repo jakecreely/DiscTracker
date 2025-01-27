@@ -1,4 +1,4 @@
-<form action="{% url 'discs:add-item' %}" method="post">
+<form action="{% url 'items:add-item' %}" method="post">
     {% csrf_token %}
     <fieldset>
         <label for="cex_id">CEX ID:</label>
@@ -6,14 +6,14 @@
     </fieldset>
     <input type="submit" value="Add">
 </form>
-<form action="{% url 'discs:update-item-prices' %}" method="post">
+<form action="{% url 'items:update-item-prices' %}" method="post">
     {% csrf_token %}
     <input type="submit" value="Update Item Prices">
 </form>
 {% if items_list %}
     <ul>
     {% for item in items_list %}
-        <li><a href="{% url 'discs:detail' item.id %}">{{ item.title }}</a></li>
+        <li><a href="{% url 'items:detail' item.id %}">{{ item.title }}</a></li>
     {% endfor %}
     </ul>
 {% else %}
