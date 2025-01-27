@@ -1,7 +1,7 @@
 import requests
 
-def fetch_item(cexId):
-    search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cexId}/detail'
+def fetch_item(cex_id):
+    search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
     response = requests.get(search_url)
     if response.status_code == 200:
         try:

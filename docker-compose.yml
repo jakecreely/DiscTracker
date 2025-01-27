@@ -1,0 +1,31 @@
+version: '1'
+
+services:
+  app:
+    build: .
+    container_name: disc-tracker
+    volumes:
+      - .:/app
+    ports:
+      - "4029:4029"
+    environment:
+      - FLASK_APP=main.py
+      - DATABASE_URL=postgresql://username:password@db:5432/disc-tracker
+    depends_on:
+      - db
+    command: python main.py
+
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: disc-tracker
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pg_data:

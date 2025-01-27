@@ -1,0 +1,16 @@
+{% extends "master.html" %}
+
+{% block title %}Item Details{% endblock %}
+
+{% block content %}
+{% if item %}
+    <ul>
+        <li>{{ item.title }}</li>
+        <li>Sell Price: {{ item.sell_price }}</li>
+        <li>Exchange Price: {{ item.exchange_price }}</li>
+        <li>Cash Price: {{ item.cash_price }}</li>
+    </ul>
+{% else %}
+    <p>No item found.</p>
+{% endif %}
+{% endblock %}
