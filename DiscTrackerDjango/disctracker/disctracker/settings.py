@@ -55,7 +55,7 @@ ROOT_URLCONF = 'disctracker.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "disctracker/templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

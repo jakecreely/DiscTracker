@@ -1,3 +1,8 @@
+{% extends "master.html" %}
+
+{% block title %}List of Items{% endblock %}
+
+{% block content %}
 <form action="{% url 'items:add-item' %}" method="post">
     {% csrf_token %}
     <fieldset>
@@ -19,3 +24,4 @@
 {% else %}
     <p>No items are available.</p>
 {% endif %}
+{% endblock %}
