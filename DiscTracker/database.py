@@ -1,140 +1,168 @@
-import sqlite3
-import pandas as pd
+from datetime import datetime
+from sqlalchemy import text
+from DiscTracker.db_setup import Session
+from DiscTracker.models import Item, PriceHistory
 
-DATABASE_NAME = 'disc_tracker.db'
-
-def initialise_database():
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''CREATE TABLE IF NOT EXISTS items (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT,
-                    cex_id TEXT,
-                    sell_price REAL,
-                    exchange_price REAL,
-                    cash_price, REAL
-                    last_checked DATE,
-                    previous_exchange_price REAL,
-                    previous_cash_price
-                 )''')
-    cur.execute('''CREATE TABLE IF NOT EXISTS price_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    item_id INTEGER,
-                    sell_price REAL,
-                    exchange_price REAL,
-                    cash_price REAL,
-                    date_checked DATE DEFAULT (DATE('now')),
-                    FOREIGN KEY (item_id) REFERENCES items(id)
-                 )''')
-    conn.commit()
-    conn.close()
-    
 def add_item(item):
-    # check structure - contains title, cex_id, price
     title = item['boxDetails'][0]['boxName']
     cex_id = item['boxDetails'][0]['boxId']
     sell_price = item['boxDetails'][0]['sellPrice']
     exchange_price = item['boxDetails'][0]['exchangePrice']
     cash_price = item['boxDetails'][0]['cashPrice']
+
+    session = Session()
+
+    try:
+        new_item = Item(
+            title = title,
+            cex_id = cex_id,
+            sell_price = sell_price,
+            exchange_price = exchange_price,
+            cash_price = cash_price,
+            last_checked = datetime.now()
+        )
+
+        session.add(new_item)
+        session.commit()
+
+        new_price_history_entry = PriceHistory(
+            item_id = new_item.id,
+            sell_price = sell_price,
+            exchange_price = exchange_price,
+            cash_price = cash_price,
+            date_checked = datetime.now()
+        )
+
+        session.add(new_price_history_entry)
+        session.commit()
+
+        print(f"Item ({title}) and price history added successfully.")
+
+    except Exception as e:
+        session.rollback()
+        print(f"Error adding item: {e}")
     
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''
-                INSERT INTO items (title, cex_id, sell_price, exchange_price, cash_price)
-                VALUES (?, ?, ?, ?, ?)
-                ''', (title, cex_id, sell_price, exchange_price, cash_price))
-    
-    # Get the ID of the newly inserted record
-    new_id = cur.lastrowid
-    
-    # Commit the transaction
-    conn.commit()
-    
-    # Fetch the newly inserted record
-    cur.execute('''
-            INSERT INTO price_history (item_id, sell_price, exchange_price, cash_price)
-            VALUES (?, ?, ?, ?)
-            ''', (new_id, sell_price, exchange_price, cash_price))
-    
-    conn.commit()
-    
-    
-def fetch_item_ids():
-    # Retrieve IDs from the database
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    
-    cur.execute("SELECT cex_id FROM items")
-    ids = cur.fetchall()
-    conn.close()
-    return [item_id[0] for item_id in ids]
+    finally:
+        session.close()
+
+def fetch_items_cex_ids():
+    session = Session()
+
+    try:
+        items = session.query(Item.cex_id).all()
+
+        item_cex_ids = [item.cex_id for item in items]
+
+        return item_cex_ids
+
+    except Exception as e:
+        print(f"Error fetching item cex IDs: {e}")
+        return []
+
+    finally:
+        session.close()
 
 def update_price_in_database(item_id, new_sell_price, new_cash_price, new_exchange_price):
-    # Update the database with new price
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
+    session = Session()
     
-    print(f"item_id:{item_id}")
-    print(f"sell_price:{new_sell_price}")
-    print(f"cash_price:{new_cash_price}")
-    print(f"exchange_price:{new_exchange_price}")
+    try:
+        item = session.query(Item).filter(Item.cex_id == item_id).first()
 
-    
-    cur.execute('''
-        UPDATE items 
-        SET 
-            sell_price = ?,
-            cash_price = ?,
-            exchange_price = ?
-        WHERE cex_id = ?
-        ''', (new_sell_price, new_cash_price, new_exchange_price, item_id))
-    conn.commit()
-    conn.close()
+        if item:
+            item.cash_price = new_cash_price
+            item.exchange_price = new_exchange_price
+            item.sell_price = new_sell_price
+            session.commit()
+        else:
+            print(f"Item with cex_id {item_id} not found")
+            
+    except Exception as e:
+        print(f"Error updating item {item_id} price: {e}")
+        session.rollback();
+        
+    finally:
+        session.close()
     
 def add_item_to_price_history(item_id, sell_price, exchange_price, cash_price):
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''
-            INSERT INTO price_history (item_id, sell_price, exchange_price, cash_price)
-            VALUES (?, ?, ?, ?)
-            ''', (item_id, sell_price, exchange_price, cash_price))
-    conn.commit()
+    session = Session()
+    
+    try:
+        new_price_history_entry = PriceHistory(
+            item_id = item_id,
+            sell_price = sell_price,
+            exchange_price = exchange_price,
+            cash_price = cash_price
+        )
+        
+        session.add(new_price_history_entry)
+        session.commit()
+    
+    except Exception as e:
+        print(f"Error adding item ({item_id}) to price history: {e}")
+        session.rollback()
+    
+    finally: 
+        session.close()
     
 def remove_item_by_name(name):
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''
-                DELETE FROM items
-                WHERE name = ?
-                ''', (name))
-    conn.commit()
-
-def remove_item_by_id(id):
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''
-                DELETE FROM items
-                WHERE id = ?
-                ''', (id))
-    conn.commit()
+    session = Session()
+    
+    try:
+        deleted_count = session.query(Item).filter(Item.name == name).delete()
+        
+        if deleted_count > 0:
+            print(f"Item with name ({name}) deleted successfully")
+        else:
+            print(f"No item with name ({name}) found")
+        
+        session.commit()
+        
+    except Exception as e:
+        print(f"Error deleting item by name {name}: {e}")
+        session.rollback()
+        
+    finally:
+        session.close()
+        
+def remove_item_by_cex_id(id):
+    session = Session()
+    
+    try:
+        deleted_count = session.query(Item).filter(Item.cex_id == id).delete()
+        
+        if deleted_count > 0:
+            print(f"Item with cex ID ({id}) deleted successfully")
+        else:
+            print(f"No item with cex ID ({id}) found")
+        
+        session.commit()
+        
+    except Exception as e:
+        print(f"Error deleting item by cex ID {id}: {e}")
+        session.rollback()
+        
+    finally:
+        session.close()
     
 def get_all_items():
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    cur.execute('''
-                SELECT * FROM items
-                ''')
-    items = cur.fetchall()
-    conn.close()
-    return items
+    session = Session()
+    
+    try:
+        items = session.query(Item).all()
+        
+        return items
+        
+    except Exception as e:
+        print(f"Error getting items: {e}")
+        return []
+        
+    finally:
+        session.close()
 
 def fetch_price_changes(): 
-    conn = sqlite3.connect(DATABASE_NAME)
-    cur = conn.cursor()
-    
-    #         //items.last_checked AS current_last_checked_date, 
-    
-    cur.execute('''
+    session = Session()
+
+    result = session.execute(text('''
     SELECT 
         items.id,
         items.title,
@@ -160,9 +188,6 @@ def fetch_price_changes():
             FROM price_history 
             WHERE price_history.item_id = items.id
         );
-    ''')
+    '''))
     
-    results = cur.fetchall()
-    # Close the database connection
-    conn.close()
-    return results
+    return result
