@@ -2,6 +2,7 @@ from django.shortcuts import redirect, render, get_object_or_404, get_list_or_40
 from django.db import DatabaseError
 from django.http import Http404
 from datetime import datetime
+import logging
 
 from .models import Item, PriceHistory
 from .services import cex 
