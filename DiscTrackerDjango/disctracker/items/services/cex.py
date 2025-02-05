@@ -28,6 +28,39 @@ def fetch_item(cex_id):
         logger.exception("An unexpected error occurred for fetching item by CEX ID %s: %s", cex_id, e)
         return None
 
+def create_or_update_item(cex_data):
+    if cex_data is None:
+        logger.error("Cex data is empty", cex_id)  
+        return None
+        
+    logger.info("Extracting data from cex_data")  
+    title = cex_data['boxDetails'][0]['boxName']
+    cex_id = cex_data['boxDetails'][0]['boxId']
+    sell_price = cex_data['boxDetails'][0]['sellPrice']
+    exchange_price = cex_data['boxDetails'][0]['exchangePrice']
+    cash_price = cex_data['boxDetails'][0]['cashPrice']
+
+    logger.info("Fetching or creating item in database")  
+    item, created = Item.objects.get_or_create(
+        cex_id=cex_id,
+        defaults={
+            "title": title,
+            "sell_price": sell_price,
+            "exchange_price": exchange_price,
+            "cash_price": cash_price,
+            "last_checked": datetime.now(),
+        }
+    )
+    
+    if not created:
+        logger.info("Updating item %s in database", cex_id)  
+        item.title = title
+        item.sell_price = sell_price
+        item.exchange_price = exchange_price
+        item.cash_price = cash_price
+        item.last_checked = datetime.now()
+        item.save()
+
 def check_price_updates():
     try: 
         logger.info("Starting price update check.")
