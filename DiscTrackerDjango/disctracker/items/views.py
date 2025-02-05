@@ -83,7 +83,7 @@ def add_item_from_cex(request):
                 return render(request, "error.html", {"message": "Failed to fetch data from CEX"})
 
             logger.info("Creating or updating item in database")
-            item = CexService.save_or_update_item(cex_data)
+            item = cex.save_or_update_item(cex_data)
 
             logger.info("Creating price history entry for item %s", cex_id)  
             price_history = cex.create_price_history_entry(item)
