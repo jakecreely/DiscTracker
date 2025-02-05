@@ -30,7 +30,7 @@ def fetch_item(cex_id):
 
 def create_or_update_item(cex_data):
     if cex_data is None:
-        logger.error("Cex data is empty", cex_id)  
+        logger.error("Cex data is None, cannot create item")  
         return None
         
     #TODO: Add validation for cex_data    
