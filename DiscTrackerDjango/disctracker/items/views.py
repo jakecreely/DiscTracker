@@ -86,13 +86,7 @@ def add_item_from_cex(request):
             item = CexService.save_or_update_item(cex_data)
 
             logger.info("Creating price history entry for item %s", cex_id)  
-            PriceHistory.objects.create(
-                item=item,
-                sell_price=sell_price,
-                exchange_price=exchange_price,
-                cash_price=cash_price,
-                date_checked=datetime.now(),
-            )
+            price_history = cex.create_price_history_entry(item)
             
             logger.info("Redirecting to items index")  
             return redirect("items:index")

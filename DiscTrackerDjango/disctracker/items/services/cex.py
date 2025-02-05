@@ -60,6 +60,26 @@ def create_or_update_item(cex_data):
         item.cash_price = cash_price
         item.last_checked = datetime.now()
         item.save()
+def create_price_history_entry(item):
+    if not item:
+        logger.error("Item is None, cannot create price history entry")
+        return None
+    
+    #TODO: Validate attributes of item before creating
+    
+    try:
+        price_entry = PriceHistory.objects.create(
+            item=item,
+            sell_price=item.sell_price,
+            exchange_price=item.exchange_price,
+            cash_price=item.cash_price,
+            date_checked=datetime.now(),
+        )
+        logger.info("Created price history entry for item %s", item.cex_id)
+        return price_entry
+    except Exception as e:
+        logger.exception("Failed to create price history entry for item %s: %s", item.cex_id, e)
+        return None
 
 def check_price_updates():
     try: 
