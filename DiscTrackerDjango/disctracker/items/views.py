@@ -4,7 +4,7 @@ from django.http import Http404
 from datetime import datetime
 
 from .models import Item, PriceHistory
-from .services.cex import fetch_item, check_price_updates
+from .services import cex 
 
 logger = logging.getLogger(__name__)
 
@@ -76,48 +76,17 @@ def add_item_from_cex(request):
         
         try:
             logger.info("Fetching item by cex_id %s", cex_id)  
-            cex_data = fetch_item(cex_id)
-            
+            cex_data = cex.fetch_item(cex_id)
+
             if cex_data is None:
                 logger.error("Fetched item with cex_id %s is empty", cex_id)  
                 return render(request, "error.html", {"message": "Failed to fetch data from CEX"})
-                
-            logger.info("Extracting data from cex_data")  
-            title = cex_data['boxDetails'][0]['boxName']
-            cex_id = cex_data['boxDetails'][0]['boxId']
-            sell_price = cex_data['boxDetails'][0]['sellPrice']
-            exchange_price = cex_data['boxDetails'][0]['exchangePrice']
-            cash_price = cex_data['boxDetails'][0]['cashPrice']
 
-            logger.info("Fetching or creating item in database")  
-            item, created = Item.objects.get_or_create(
-                cex_id=cex_id,
-                defaults={
-                    "title": title,
-                    "sell_price": sell_price,
-                    "exchange_price": exchange_price,
-                    "cash_price": cash_price,
-                    "last_checked": datetime.now(),
-                }
-            )
-            
-            if not created:
-                logger.info("Updating item %s in database", cex_id)  
-                item.title = title
-                item.sell_price = sell_price
-                item.exchange_price = exchange_price
-                item.cash_price = cash_price
-                item.last_checked = datetime.now()
-                item.save()
-                
+            logger.info("Creating or updating item in database")
+            item = cex.save_or_update_item(cex_data)
+
             logger.info("Creating price history entry for item %s", cex_id)  
-            PriceHistory.objects.create(
-                item=item,
-                sell_price=sell_price,
-                exchange_price=exchange_price,
-                cash_price=cash_price,
-                date_checked=datetime.now(),
-            )
+            price_history = cex.create_price_history_entry(item)
             
             logger.info("Redirecting to items index")  
             return redirect("items:index")
@@ -134,7 +103,7 @@ def add_item_from_cex(request):
 def update_item_prices(request):
     try:
         logger.info("Updating item prices")  
-        check_price_updates()
+        cex.check_price_updates()
         logger.info("Redirecting to items index")  
         return redirect("items:index")
     except Exception as e:

@@ -28,6 +28,63 @@ def fetch_item(cex_id):
         logger.exception("An unexpected error occurred for fetching item by CEX ID %s: %s", cex_id, e)
         return None
 
+def create_or_update_item(cex_data):
+    if cex_data is None:
+        logger.error("Cex data is None, cannot create item")  
+        return None
+        
+    #TODO: Add validation for cex_data    
+    logger.info("Extracting data from cex_data")  
+    title = cex_data['boxDetails'][0]['boxName']
+    cex_id = cex_data['boxDetails'][0]['boxId']
+    sell_price = cex_data['boxDetails'][0]['sellPrice']
+    exchange_price = cex_data['boxDetails'][0]['exchangePrice']
+    cash_price = cex_data['boxDetails'][0]['cashPrice']
+
+    logger.info("Fetching or creating item in database")  
+    item, created = Item.objects.get_or_create(
+        cex_id=cex_id,
+        defaults={
+            "title": title,
+            "sell_price": sell_price,
+            "exchange_price": exchange_price,
+            "cash_price": cash_price,
+            "last_checked": datetime.now(),
+        }
+    )
+    
+    if not created:
+        logger.info("Updating item %s in database", cex_id)  
+        item.title = title
+        item.sell_price = sell_price
+        item.exchange_price = exchange_price
+        item.cash_price = cash_price
+        item.last_checked = datetime.now()
+        item.save()
+        
+    return item
+
+def create_price_history_entry(item):
+    if not item:
+        logger.error("Item is None, cannot create price history entry")
+        return None
+    
+    #TODO: Validate attributes of item before creating
+    
+    try:
+        price_entry = PriceHistory.objects.create(
+            item=item,
+            sell_price=item.sell_price,
+            exchange_price=item.exchange_price,
+            cash_price=item.cash_price,
+            date_checked=datetime.now(),
+        )
+        logger.info("Created price history entry for item %s", item.cex_id)
+        return price_entry
+    except Exception as e:
+        logger.exception("Failed to create price history entry for item %s: %s", item.cex_id, e)
+        return None
+
 def check_price_updates():
     try: 
         logger.info("Starting price update check.")
