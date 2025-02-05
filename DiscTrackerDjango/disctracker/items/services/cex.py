@@ -61,6 +61,9 @@ def create_or_update_item(cex_data):
         item.cash_price = cash_price
         item.last_checked = datetime.now()
         item.save()
+        
+    return item
+
 def create_price_history_entry(item):
     if not item:
         logger.error("Item is None, cannot create price history entry")
