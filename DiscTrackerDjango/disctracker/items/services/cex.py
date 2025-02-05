@@ -2,7 +2,7 @@ import requests
 import logging
 from datetime import datetime
 
-from ..models import Item, PriceHistory
+from items.models import Item, PriceHistory
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +15,14 @@ def fetch_item(cex_id):
         search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
         response = requests.get(search_url)
         response.raise_for_status()
-        data = response.json()
+        data = response.json()['response']['data']
+        
+        if not data:
+            logger.warning("Fetched item returned no data")
+            return None
+        
         logger.info("Successfully fetched item with CEX ID %s", cex_id)
-        return data['response']['data']
+        return data
     except requests.exceptions.HTTPError as e:
         logger.exception("HTTP Error when fetching item by CEX ID %s: %s", cex_id, e)
         return None
