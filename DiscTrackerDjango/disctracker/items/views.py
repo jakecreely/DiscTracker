@@ -4,7 +4,7 @@ from django.http import Http404
 from datetime import datetime
 
 from .models import Item, PriceHistory
-from .services.cex import fetch_item, check_price_updates
+from .services import cex 
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def add_item_from_cex(request):
         
         try:
             logger.info("Fetching item by cex_id %s", cex_id)  
-            cex_data = fetch_item(cex_id)
+            cex_data = cex.fetch_item(cex_id)
             
             if cex_data is None:
                 logger.error("Fetched item with cex_id %s is empty", cex_id)  
@@ -134,7 +134,7 @@ def add_item_from_cex(request):
 def update_item_prices(request):
     try:
         logger.info("Updating item prices")  
-        check_price_updates()
+        cex.check_price_updates()
         logger.info("Redirecting to items index")  
         return redirect("items:index")
     except Exception as e:
