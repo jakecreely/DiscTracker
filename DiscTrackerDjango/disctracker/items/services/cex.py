@@ -33,6 +33,7 @@ def create_or_update_item(cex_data):
         logger.error("Cex data is empty", cex_id)  
         return None
         
+    #TODO: Add validation for cex_data    
     logger.info("Extracting data from cex_data")  
     title = cex_data['boxDetails'][0]['boxName']
     cex_id = cex_data['boxDetails'][0]['boxId']
