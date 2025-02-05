@@ -103,7 +103,7 @@ LOGGING = {
             "formatter": "verbose", # Specifies the verbose formatter
         },
         "items_file": { # Name of the handler
-            "level": "ERROR", # Handles WARNING or higher
+            "level": "ERROR", # Handles ERROR or higher
             "class": "logging.FileHandler", # Writes logs to a file
             "filename": "logs/items_errors.log", # Path to log file
             "formatter": "verbose", # Specifies the verbose formatter
