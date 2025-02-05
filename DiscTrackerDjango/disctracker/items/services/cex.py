@@ -8,6 +8,10 @@ logger = logging.getLogger(__name__)
 
 def fetch_item(cex_id):
     try:
+        if not cex_id:
+            logger.error("Invalid CEX ID provided: %s", cex_id)
+            return None
+            
         search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
         response = requests.get(search_url)
         response.raise_for_status()
@@ -30,6 +34,10 @@ def check_price_updates():
         items = Item.objects.all()
 
         for item in items:
+            if not item.cex_id:
+                logger.warning("Item has no cex_id so skipping")
+                continue
+            
             cex_id = item.cex_id
 
             current_exchange_price = item.exchange_price
