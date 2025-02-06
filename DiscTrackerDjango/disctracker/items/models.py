@@ -1,13 +1,36 @@
 from django.db import models
 from datetime import datetime
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 class Item(models.Model):
+    cex_id = models.CharField(
+        max_length=255, 
+        validators=[
+            RegexValidator(r'^[A-Za-z0-9]+$', 'ID must be alphanumeric characters')
+        ])
     title = models.CharField(max_length=255)
-    cex_id = models.CharField(max_length=255)
-    sell_price = models.FloatField()
-    exchange_price = models.FloatField()
-    cash_price = models.FloatField()
     last_checked = models.DateField()
+    sell_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        validators=[
+            MinValueValidator(0, "Sell Price must be greater or equal to 0"), 
+            MaxValueValidator(3000, "Sell Price must be less than or equal to 3000")
+        ])
+    exchange_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        validators=[
+            MinValueValidator(0, "Exchange Price must be greater or equal to 0"), 
+            MaxValueValidator(3000, "Exchange Price must be less than or equal to 3000")
+        ])
+    cash_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        validators=[
+            MinValueValidator(0, "Cash Price must be greater or equal to 0"), 
+            MaxValueValidator(3000, "Cash Price must be less than or equal to 3000")
+        ])
 
     def __str__(self):
         return self.title
