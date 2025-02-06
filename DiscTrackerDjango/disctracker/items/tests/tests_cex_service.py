@@ -75,3 +75,34 @@ class TestCexServiceFetchItem(TestCase):
         result = cex.fetch_item("711719417576")
 
         self.assertIsNone(result)
+        
+class TestCexServiceCreateOrUpdateItem(TestCase):
+    def test_create_item_success(self):
+        pass
+    
+    def test_create_item_invalid_id(self):
+        pass
+    
+    def test_create_item_missing_attributes(self):
+        pass
+    
+    def test_update_item_success(self):
+        pass
+    
+    def test_update_item_invalid_id(self):
+        pass
+    
+    def test_update_item_valid_id(self):
+        pass
+    
+    def test_update_item_missing_attributes(self):
+        pass
+    
+    def test_create_or_update_item_none_input(self):
+        pass
+    
+    def test_create_or_update_item_database_error(self):
+        pass
+    
+    def test_create_or_update_item_unexpected_error(self):
+        pass
