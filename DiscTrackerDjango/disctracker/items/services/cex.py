@@ -114,6 +114,8 @@ def create_price_history_entry(item):
         return None
 
 def check_price_updates():
+    updated_items = []
+    
     try: 
         logger.info("Starting price update check.")
         items = Item.objects.all()
@@ -124,9 +126,6 @@ def check_price_updates():
                 continue
             
             cex_id = item.cex_id
-
-            current_exchange_price = item.exchange_price
-            current_cash_price = item.cash_price
 
             logger.info("Fetching data for CEX ID: %s", cex_id)
 
@@ -139,36 +138,33 @@ def check_price_updates():
             new_exchange_price = data['boxDetails'][0]['exchangePrice']
             
             if new_cash_price and new_exchange_price is not None:
-                if new_cash_price > current_cash_price and new_exchange_price > current_exchange_price:
+                if (item.sell_price != new_sell_price or 
+                item.exchange_price != new_exchange_price or 
+                item.cash_price != new_cash_price):
                     item.sell_price = new_sell_price
                     item.cash_price = new_cash_price
                     item.exchange_price = new_exchange_price
+                    item.last_checked = datetime.now()
                     item.save()
-                    logger.info("Updating all prices for CEX ID: %s", cex_id)
-                elif new_cash_price > current_cash_price and new_exchange_price <= current_exchange_price:
-                    item.sell_price = new_sell_price
-                    item.cash_price = new_cash_price
-                    item.save()
-                    logger.info("Updating cash and sell price for CEX ID: %s", cex_id)
-                elif new_cash_price <= current_cash_price and new_exchange_price > current_exchange_price:
-                    item.sell_price = new_sell_price
-                    item.exchange_price = new_exchange_price
-                    item.save()
-                    logger.info("Updating exchange and sell price for CEX ID: %s", cex_id)
-
-                PriceHistory.objects.create(
-                    item=item,
-                    sell_price=new_sell_price,
-                    exchange_price=new_exchange_price,
-                    cash_price=new_cash_price,
-                    date_checked=datetime.now(),
-                )                
-                logger.info("Price history recorded for CEX ID: %s", cex_id)
+                    logger.info("Updating prices for CEX ID: %s", cex_id)    
+                        
+                    PriceHistory.objects.create(
+                        item=item,
+                        sell_price=new_sell_price,
+                        exchange_price=new_exchange_price,
+                        cash_price=new_cash_price,
+                        date_checked=datetime.now(),
+                    )  
+                    logger.info("Price history recorded for CEX ID: %s", cex_id)
+                    
+                    updated_items.append(item)
+                else:
+                    logger.info("No price changes for CEX ID: %s, skipping save", cex_id)
             else:
                 logger.warning("New cash or exchange price is None for CEX ID: %s", cex_id)
         
         logger.info("Price updates completed successfully")    
-        return "Price updates completed successfully."
+        return updated_items
     except requests.exceptions.HTTPError as e:
         logger.exception("HTTP Error when fetching item by CEX ID %s: %s", cex_id, e)
         return None
