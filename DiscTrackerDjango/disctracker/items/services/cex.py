@@ -1,6 +1,7 @@
 import requests
 import logging
 from datetime import datetime
+from django.db import DatabaseError
 
 from items.models import Item, PriceHistory
 
@@ -38,37 +39,47 @@ def create_or_update_item(cex_data):
         logger.error("Cex data is None, cannot create item")  
         return None
         
-    #TODO: Add validation for cex_data    
-    logger.info("Extracting data from cex_data")  
-    title = cex_data['boxDetails'][0]['boxName']
-    cex_id = cex_data['boxDetails'][0]['boxId']
-    sell_price = cex_data['boxDetails'][0]['sellPrice']
-    exchange_price = cex_data['boxDetails'][0]['exchangePrice']
-    cash_price = cex_data['boxDetails'][0]['cashPrice']
+    try:
+        #TODO: Add validation for cex_data    
+        logger.info("Extracting data from cex_data")  
+        title = cex_data['boxDetails'][0]['boxName']
+        cex_id = cex_data['boxDetails'][0]['boxId']
+        sell_price = cex_data['boxDetails'][0]['sellPrice']
+        exchange_price = cex_data['boxDetails'][0]['exchangePrice']
+        cash_price = cex_data['boxDetails'][0]['cashPrice']
 
-    logger.info("Fetching or creating item in database")  
-    item, created = Item.objects.get_or_create(
-        cex_id=cex_id,
-        defaults={
-            "title": title,
-            "sell_price": sell_price,
-            "exchange_price": exchange_price,
-            "cash_price": cash_price,
-            "last_checked": datetime.now(),
-        }
-    )
-    
-    if not created:
-        logger.info("Updating item %s in database", cex_id)  
-        item.title = title
-        item.sell_price = sell_price
-        item.exchange_price = exchange_price
-        item.cash_price = cash_price
-        item.last_checked = datetime.now()
-        item.save()
+        logger.info("Fetching or creating item in database")  
+        item, created = Item.objects.get_or_create(
+            cex_id=cex_id,
+            defaults={
+                "title": title,
+                "sell_price": sell_price,
+                "exchange_price": exchange_price,
+                "cash_price": cash_price,
+                "last_checked": datetime.now(),
+            }
+        )
         
-    return item
-
+        if not created:
+            logger.info("Updating item %s in database", cex_id)  
+            item.title = title
+            item.sell_price = sell_price
+            item.exchange_price = exchange_price
+            item.cash_price = cash_price
+            item.last_checked = datetime.now()
+            item.save()
+            logger.info("Updated item %s in database", cex_id)
+        else:
+            logger.info("Created item %s in database", cex_id)
+            
+        return item
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        return None
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        return None
+    
 def create_price_history_entry(item):
     if not item:
         logger.error("Item is None, cannot create price history entry")
