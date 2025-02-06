@@ -51,6 +51,35 @@ class TestCexServiceFetchItem(TestCase):
         result = cex.fetch_item(invalid_cex_id)
 
         self.assertIsNone(result)
+
+    @patch('items.services.cex.requests.get')
+    def test_fetch_item_invalid_response_schema(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "response": {
+                "data": {
+                    "boxDetails": [{
+                        "boxId": "711719417576",
+                        "boxName": "Spider-Man (2018) No DLC",
+                        "sellPrice": 15.0,
+                        "exchangePrice": 10.0,
+                        "cashPrice": 7.0,
+                        "extraField": "extraInfo"
+                    }]
+                }
+            }
+        }
+        
+        result = cex.fetch_item("711719417576")
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result["boxDetails"][0]["boxId"], "711719417576")
+        self.assertEqual(result["boxDetails"][0]["boxName"], "Spider-Man (2018) No DLC")
+        self.assertEqual(result["boxDetails"][0]["sellPrice"], 15.0)
+        self.assertEqual(result["boxDetails"][0]["exchangePrice"], 10.0)
+        self.assertEqual(result["boxDetails"][0]["cashPrice"], 7.0)
+        self.assertNotIn("extraField", result["boxDetails"][0])
+        
     
     @patch('items.services.cex.requests.get')
     def test_fetch_item_http_error(self, mock_get):
