@@ -103,6 +103,12 @@ def create_price_history_entry(item):
         )
         logger.info("Created price history entry for item %s", item.cex_id)
         return price_entry
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        return None
+    except AttributeError as e:
+        logger.exception("Missing attributes: %s", e)
+        return None
     except Exception as e:
         logger.exception("Failed to create price history entry for item %s: %s", item.cex_id, e)
         return None
