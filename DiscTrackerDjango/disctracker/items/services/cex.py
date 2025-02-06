@@ -17,7 +17,9 @@ def fetch_item(cex_id):
         search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
         response = requests.get(search_url)
         response.raise_for_status()
-        data = response.json()['response']['data']
+        response_json = response.json()
+        
+        item_response = CexItemResponse(**response_json)
         
         if not data:
             logger.warning("Fetched item returned no data")
