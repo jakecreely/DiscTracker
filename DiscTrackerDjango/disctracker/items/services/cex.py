@@ -3,7 +3,8 @@ import logging
 from datetime import datetime
 from django.db import DatabaseError
 
-from items.models import Item, PriceHistory
+from items.models.db_models import Item, PriceHistory
+from items.models.pydantic_models import ItemDetail, CexItemData, CexItemResponse
 
 logger = logging.getLogger(__name__)
 
