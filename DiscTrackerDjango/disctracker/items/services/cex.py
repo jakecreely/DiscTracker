@@ -40,13 +40,19 @@ def create_or_update_item(cex_data):
         return None
         
     try:
-        #TODO: Add validation for cex_data    
+        #TODO: Add validation for cex_data
         logger.info("Extracting data from cex_data")  
-        title = cex_data['boxDetails'][0]['boxName']
-        cex_id = cex_data['boxDetails'][0]['boxId']
-        sell_price = cex_data['boxDetails'][0]['sellPrice']
-        exchange_price = cex_data['boxDetails'][0]['exchangePrice']
-        cash_price = cex_data['boxDetails'][0]['cashPrice']
+        box_details = cex_data["boxDetails"][0]
+
+        cex_id = box_details.get("boxId")
+        if not cex_id:
+            logger.error("Missing boxId in cex_data")  
+            return None
+        
+        title = box_details.get("boxName")
+        sell_price = box_details.get("sellPrice")
+        exchange_price = box_details.get("exchangePrice")
+        cash_price = box_details.get("cashPrice")
 
         logger.info("Fetching or creating item in database")  
         item, created = Item.objects.get_or_create(
@@ -62,10 +68,10 @@ def create_or_update_item(cex_data):
         
         if not created:
             logger.info("Updating item %s in database", cex_id)  
-            item.title = title
-            item.sell_price = sell_price
-            item.exchange_price = exchange_price
-            item.cash_price = cash_price
+            item.title = box_details.get("boxName", item.title)
+            item.sell_price = box_details.get("sellPrice", item.sell_price)
+            item.exchange_price = box_details.get("exchangePrice", item.exchange_price)
+            item.cash_price = box_details.get("cashPrice", item.cash_price)
             item.last_checked = datetime.now()
             item.save()
             logger.info("Updated item %s in database", cex_id)
