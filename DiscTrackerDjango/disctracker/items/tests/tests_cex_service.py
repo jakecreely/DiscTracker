@@ -242,3 +242,53 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         item = cex.create_or_update_item(self.valid_fetched_item_data)
         
         self.assertIsNone(item)
+        
+class TestCexServiceCreatePriceHistoryEntry(TestCase):
+    def setUp(self):
+        self.existing_item = Item.objects.create(
+            cex_id="5060020626449",
+            title="Halloween (18) 1978",
+            sell_price=8.0,
+            exchange_price=5.0,
+            cash_price=3.0,
+            last_checked=datetime(2025, 1, 1)
+        )
+    
+    def test_create_price_history_entry_success(self):
+        price_entry = cex.create_price_history_entry(self.existing_item)
+        
+        self.assertEqual(price_entry.item.cex_id, self.existing_item.cex_id)
+        self.assertEqual(price_entry.sell_price, self.existing_item.sell_price)
+        self.assertEqual(price_entry.exchange_price, self.existing_item.exchange_price)
+        self.assertEqual(price_entry.cash_price, self.existing_item.cash_price)
+        
+    def test_create_price_history_entry_falsey_input(self):
+        price_entry = cex.create_price_history_entry(None)
+        
+        self.assertIsNone(price_entry)
+        
+    def test_create_price_history_entry_invalid_item(self):
+        invalid_object = {
+            "one": 1,
+            "two": 2
+        }
+        
+        price_entry = cex.create_price_history_entry(invalid_object)
+        
+        self.assertIsNone(price_entry)
+    
+    @patch("items.models.PriceHistory.objects.create")
+    def test_create_price_history_entry_database_error(self, mock_create):
+        mock_create.side_effect = DatabaseError
+        
+        price_entry = cex.create_price_history_entry(self.existing_item)
+        
+        self.assertIsNone(price_entry)
+        
+    @patch("items.models.PriceHistory.objects.create")
+    def test_create_price_history_entry_unexpected_error(self, mock_create):
+        mock_create.side_effect = Exception
+        
+        price_entry = cex.create_price_history_entry(self.existing_item)
+        
+        self.assertIsNone(price_entry)
