@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator, RegexVa
 class Item(models.Model):
     cex_id = models.CharField(
         max_length=255, 
+        unique=True,
         validators=[
             RegexValidator(r'^[A-Za-z0-9]+$', 'ID must be alphanumeric characters')
         ])
