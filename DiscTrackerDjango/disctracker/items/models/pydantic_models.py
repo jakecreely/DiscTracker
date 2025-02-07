@@ -11,13 +11,16 @@ class ItemDetail(BaseModel):
     exchangePrice: float
     cashPrice: float
         
+class BoxDetailsWrapper(BaseModel):
+    boxDetails: List[ItemDetail]
+
 class CexApiError(BaseModel):
     code: str
     internal_message: str
     moreInfo: List[str]
 class CexItemApiResponseData(BaseModel):
     ack: str # Acknolwegment/Status
-    data: List[ItemDetail]
+    data: BoxDetailsWrapper
     error: CexApiError
     
 class CexItemApiResponseWrapper(BaseModel):
@@ -26,7 +29,9 @@ class CexItemApiResponseWrapper(BaseModel):
 # CEX API Response Structure
 # "response": {
 #   "ack": "Success",
-#   "data": {},
+#   "data": {
+    #   "boxDetails": [ItemDetail]
+    # },
 #   "error": {
 #       "code": "",
 #       "internal_message": "",
