@@ -9,13 +9,15 @@ from items.models.pydantic_models import CexItemApiResponseWrapper, CexIdValidat
 
 logger = logging.getLogger(__name__)
 
+CEX_API_BASE_URL = "https://wss2.cex.uk.webuy.io/v3/boxes"
+
 def fetch_item(cex_id):
     try:
         if not cex_id:
             logger.error("Invalid CEX ID provided: %s", cex_id)
             return None
             
-        search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
+        search_url = f'{CEX_API_BASE_URL}/{cex_id}/detail'
         response = requests.get(search_url)
         
         if not data:
@@ -139,7 +141,7 @@ def check_price_updates():
 
             logger.info("Fetching data for CEX ID: %s", cex_id)
 
-            response = requests.get(f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail')
+            response = requests.get(f'{CEX_API_BASE_URL}/{cex_id}/detail')
             response.raise_for_status()
             
             data = response.json()['response']['data']
