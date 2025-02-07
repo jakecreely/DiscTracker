@@ -1,6 +1,6 @@
 import requests
 import logging
-from datetime import datetime
+from datetime import date
 from pydantic import ValidationError
 from django.db import DatabaseError
 
@@ -78,7 +78,7 @@ def create_or_update_item(item_data):
                 "sell_price": validated_item_data.sellPrice,
                 "exchange_price": validated_item_data.exchangePrice,
                 "cash_price": validated_item_data.cashPrice,
-                "last_checked": datetime.now(),
+                "last_checked": date.today(),
             }
         )
                 
@@ -91,7 +91,7 @@ def create_or_update_item(item_data):
             item.sell_price = validated_item_data.sellPrice
             item.exchange_price = validated_item_data.exchangePrice
             item.cash_price = validated_item_data.cashPrice
-            item.last_checked = datetime.now()
+            item.last_checked = date.today()
             item.save()
             logger.info("Updated item %s in database", cex_id)
             return item
@@ -126,7 +126,7 @@ def create_price_history_entry(item):
             sell_price=item.sell_price,
             exchange_price=item.exchange_price,
             cash_price=item.cash_price,
-            date_checked=datetime.now(),
+            date_checked=date.today(),
         )
         logger.info("Created price history entry for item %s", item.cex_id)
         return price_entry
@@ -182,7 +182,7 @@ def check_price_updates():
                     item.sell_price = new_sell_price
                     item.cash_price = new_cash_price
                     item.exchange_price = new_exchange_price
-                    item.last_checked = datetime.now()
+                    item.last_checked = date.today()
                     item.save()
                     logger.info("Updated prices for CEX ID: %s", item.cex_id)    
                         
@@ -191,7 +191,7 @@ def check_price_updates():
                         sell_price=new_sell_price,
                         exchange_price=new_exchange_price,
                         cash_price=new_cash_price,
-                        date_checked=datetime.now(),
+                        date_checked=date.today(),
                     )  
                     logger.info("Price history recorded for CEX ID: %s", item.cex_id)
                     

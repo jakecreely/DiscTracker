@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from sqlalchemy import text
 from DiscTracker.db_setup import Session
 from DiscTracker.models import Item, PriceHistory
@@ -19,7 +19,7 @@ def add_item(item):
             sell_price = sell_price,
             exchange_price = exchange_price,
             cash_price = cash_price,
-            last_checked = datetime.now()
+            last_checked = date.today()
         )
 
         session.add(new_item)
@@ -30,7 +30,7 @@ def add_item(item):
             sell_price = sell_price,
             exchange_price = exchange_price,
             cash_price = cash_price,
-            date_checked = datetime.now()
+            date_checked = date.today()
         )
 
         session.add(new_price_history_entry)

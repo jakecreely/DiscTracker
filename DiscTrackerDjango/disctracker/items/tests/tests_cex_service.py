@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import date
 from django.test import TestCase
 from django.db import DatabaseError
 from unittest.mock import patch
@@ -156,7 +156,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             sell_price=8.0,
             exchange_price=5.0,
             cash_price=3.0,
-            last_checked=datetime(2025, 1, 1)
+            last_checked=date(2025, 1, 1)
         )
 
         self.valid_fetched_item_data = {
@@ -294,7 +294,7 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
             sell_price=8.0,
             exchange_price=5.0,
             cash_price=3.0,
-            last_checked=datetime(2025, 1, 1)
+            last_checked=date(2025, 1, 1)
         )
     
     def test_create_price_history_entry_success(self):
@@ -344,7 +344,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
             sell_price=20.0,
             exchange_price=15.0,
             cash_price=10.0,
-            last_checked=datetime(2024, 12, 31),
+            last_checked=date(2024, 12, 31),
         )
         pass
     
