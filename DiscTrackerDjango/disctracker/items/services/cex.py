@@ -14,8 +14,11 @@ CEX_API_BASE_URL = "https://wss2.cex.uk.webuy.io/v3/boxes"
 def fetch_item(cex_id):
     try:
         if not cex_id:
-            logger.error("Invalid CEX ID provided: %s", cex_id)
+            logger.error("CEX ID not provided: %s", cex_id)
             return None
+        
+        validated_cex_id_input = CexIdValidator(cex_id=cex_id)
+        cex_id = validated_cex_id_input.cex_id
             
         search_url = f'{CEX_API_BASE_URL}/{cex_id}/detail'
         response = requests.get(search_url)

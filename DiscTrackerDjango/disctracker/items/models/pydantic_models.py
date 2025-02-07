@@ -1,5 +1,8 @@
 from typing import List
+from pydantic import BaseModel, Field
 
+class CexIdValidator(BaseModel):
+    cex_id: str = Field(pattern=r'^[A-Za-z0-9]+$')
 
 class ItemDetail(BaseModel):
     boxId: str
