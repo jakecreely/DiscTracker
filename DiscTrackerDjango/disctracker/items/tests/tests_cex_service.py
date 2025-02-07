@@ -353,6 +353,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -361,6 +362,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": 3.0,
                         "cashPrice": 8.0
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -396,6 +402,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -404,6 +411,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": current_exchange_price,
                         "cashPrice": current_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -424,6 +436,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -432,6 +445,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": self.item_with_valid_cex_id.exchange_price,
                         "cashPrice": increased_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -461,6 +479,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -469,6 +488,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": self.item_with_valid_cex_id.exchange_price,
                         "cashPrice": decreased_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -498,6 +522,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -506,6 +531,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": self.item_with_valid_cex_id.exchange_price,
                         "cashPrice": self.item_with_valid_cex_id.cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -535,6 +565,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -543,6 +574,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": self.item_with_valid_cex_id.exchange_price,
                         "cashPrice": self.item_with_valid_cex_id.cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -572,6 +608,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -580,6 +617,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": increased_exchange_price,
                         "cashPrice": self.item_with_valid_cex_id.cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -609,6 +651,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -617,6 +660,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": decreased_exchange_price,
                         "cashPrice": self.item_with_valid_cex_id.cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -648,6 +696,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -656,6 +705,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": increased_exchange_price,
                         "cashPrice": increased_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -689,6 +743,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -697,6 +752,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": decreased_exchange_price,
                         "cashPrice": decreased_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -730,6 +790,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -738,6 +799,11 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": negative_exchange_price,
                         "cashPrice": negative_cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
@@ -768,6 +834,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
             "response": {
+                "ack": "success",
                 "data": {
                     "boxDetails": [{
                         "boxId": self.item_with_valid_cex_id.cex_id,
@@ -776,33 +843,39 @@ class TestCexServiceCheckPriceUpdates(TestCase):
                         "exchangePrice": self.item_with_valid_cex_id.exchange_price,
                         "cashPrice": self.item_with_valid_cex_id.cash_price
                     }]
+                },
+                "error": {
+                    "code": "",
+                    "internal_message": "",
+                    "moreInfo": []   
                 }
             }
         }
         
         updated_items = cex.check_price_updates()
         
-        self.assertIsNone(updated_items)
+        # Invalid Items are skipped
+        self.assertEqual(len(updated_items), 0)
     
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_http_error(self, mock_get):
-        mock_get.side_effect = requests.exceptions.HTTPError
+    @patch("items.services.cex.fetch_item")
+    def test_check_price_updates_http_error(self, mock_fetch_item):
+        mock_fetch_item.side_effect = requests.exceptions.HTTPError
         
         updated_items = cex.check_price_updates()
         
         self.assertIsNone(updated_items)
     
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_json_error(self, mock_get):
-        mock_get.side_effect = requests.exceptions.JSONDecodeError
+    @patch("items.services.cex.fetch_item")
+    def test_check_price_updates_json_error(self, mock_fetch_item):
+        mock_fetch_item.side_effect = requests.exceptions.JSONDecodeError
         
         updated_items = cex.check_price_updates()
         
         self.assertIsNone(updated_items)
     
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_unexpected_error(self, mock_get):
-        mock_get.side_effect = Exception
+    @patch("items.services.cex.fetch_item")
+    def test_check_price_updates_unexpected_error(self, mock_fetch_item):
+        mock_fetch_item.side_effect = Exception
         
         updated_items = cex.check_price_updates()
         

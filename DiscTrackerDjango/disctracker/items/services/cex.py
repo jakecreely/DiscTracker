@@ -152,28 +152,39 @@ def check_price_updates():
                 logger.warning("Item has no cex_id so skipping")
                 continue
             
-            cex_id = item.cex_id
+            logger.info("Fetching data for CEX ID: %s", item.cex_id)
 
-            logger.info("Fetching data for CEX ID: %s", cex_id)
+            fetched_item_data = fetch_item(item.cex_id)  
+            
+            if not fetched_item_data:
+                logger.warning("No fetched data for CEX ID %s so skipping", item.cex_id)
+                continue  
 
-            response = requests.get(f'{CEX_API_BASE_URL}/{cex_id}/detail')
-            response.raise_for_status()
+            new_sell_price = fetched_item_data.sellPrice
+            new_cash_price = fetched_item_data.cashPrice
+            new_exchange_price = fetched_item_data.exchangePrice
             
-            data = response.json()['response']['data']
-            new_sell_price = data['boxDetails'][0]['sellPrice']
-            new_cash_price = data['boxDetails'][0]['cashPrice']
-            new_exchange_price = data['boxDetails'][0]['exchangePrice']
+            price_data_valid = (
+                new_sell_price is not None and
+                new_cash_price is not None and
+                new_exchange_price is not None
+            )
             
-            if new_cash_price and new_exchange_price is not None:
-                if (item.sell_price != new_sell_price or 
+            price_changed = (
+                item.sell_price != new_sell_price or 
                 item.exchange_price != new_exchange_price or 
-                item.cash_price != new_cash_price):
+                item.cash_price != new_cash_price
+            )
+            
+            if price_data_valid:
+                if price_changed:
+                    logger.info("Updating prices for CEX ID: %s", item.cex_id)    
                     item.sell_price = new_sell_price
                     item.cash_price = new_cash_price
                     item.exchange_price = new_exchange_price
                     item.last_checked = datetime.now()
                     item.save()
-                    logger.info("Updating prices for CEX ID: %s", cex_id)    
+                    logger.info("Updated prices for CEX ID: %s", item.cex_id)    
                         
                     PriceHistory.objects.create(
                         item=item,
@@ -182,21 +193,21 @@ def check_price_updates():
                         cash_price=new_cash_price,
                         date_checked=datetime.now(),
                     )  
-                    logger.info("Price history recorded for CEX ID: %s", cex_id)
+                    logger.info("Price history recorded for CEX ID: %s", item.cex_id)
                     
                     updated_items.append(item)
                 else:
-                    logger.info("No price changes for CEX ID: %s, skipping save", cex_id)
+                    logger.info("No price changes for CEX ID: %s, skipping save", item.cex_id)
             else:
-                logger.warning("New cash or exchange price is None for CEX ID: %s", cex_id)
+                logger.warning("New cash or exchange price is None for CEX ID: %s", item.cex_id)
         
         logger.info("Price updates completed successfully")    
         return updated_items
     except requests.exceptions.HTTPError as e:
-        logger.exception("HTTP Error when fetching item by CEX ID %s: %s", cex_id, e)
+        logger.exception("HTTP Error when fetching item by CEX ID %s: %s", item.cex_id, e)
         return None
     except requests.exceptions.JSONDecodeError as e:
-        logger.exception("Failed to parse JSON response for CEX ID %s: %s", cex_id, e)
+        logger.exception("Failed to parse JSON response for CEX ID %s: %s", item.cex_id, e)
         return None
     except Exception as e:
         logger.exception("An unexpected error occurred for checking item prices: %s", e)
