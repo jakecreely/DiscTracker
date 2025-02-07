@@ -110,9 +110,17 @@ def create_price_history_entry(item):
         logger.error("Item is None, cannot create price history entry")
         return None
     
-    #TODO: Validate attributes of item before creating
+    if not isinstance(item, Item):
+        logger.error("Invalid item type, expected Item model instead of %s", type(item))
+        return None
     
     try:
+        item.full_clean()
+    except ValidationError as e:
+        logger.error("Item failed validation: %s", e)
+        return None    
+        
+    try:        
         price_entry = PriceHistory.objects.create(
             item=item,
             sell_price=item.sell_price,
