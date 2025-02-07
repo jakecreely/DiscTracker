@@ -31,7 +31,7 @@ class Item(models.Model):
             MinValueValidator(0, "Cash Price must be greater or equal to 0"), 
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000")
         ])
-    last_checked = models.DateField(default=date.today)
+    last_checked = models.DateField(default=date.today())
 
     def __str__(self):
         return self.title
@@ -59,7 +59,7 @@ class PriceHistory(models.Model):
             MinValueValidator(0, "Cash Price must be greater or equal to 0"), 
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000")
         ])
-    date_checked = models.DateField(default=date.today)
+    date_checked = models.DateField(default=date.today())
 
     def __str__(self):
         return f"Price History for {self.item.title} on {self.date_checked}"

@@ -1,7 +1,6 @@
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 from django.db import DatabaseError
 from django.http import Http404
-from datetime import datetime
 import logging
 
 from items.models.db_models import Item, PriceHistory
