@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import List
+
 
 class ItemDetail(BaseModel):
     boxId: str
@@ -6,9 +7,26 @@ class ItemDetail(BaseModel):
     sellPrice: float 
     exchangePrice: float
     cashPrice: float
+        
+class CexApiError(BaseModel):
+    code: str
+    internal_message: str
+    moreInfo: List[str]
+class CexItemApiResponseData(BaseModel):
+    ack: str # Acknolwegment/Status
+    data: List[ItemDetail]
+    error: CexApiError
+    
+class CexItemApiResponseWrapper(BaseModel):
+    response: CexItemApiResponseData
 
-class CexItemData(BaseModel):
-    data: ItemDetail
-
-class CexItemResponse(BaseModel):
-    response: CexItemData
+# CEX API Response Structure
+# "response": {
+#   "ack": "Success",
+#   "data": {},
+#   "error": {
+#       "code": "",
+#       "internal_message": "",
+#       "moreInfo": []
+#   }
+# }
