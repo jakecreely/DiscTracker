@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 
 from .models import Item, PriceHistory
-from .services import cex 
+from items.services import cex 
 
 logger = logging.getLogger(__name__)
 
