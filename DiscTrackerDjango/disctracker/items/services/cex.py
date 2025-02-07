@@ -1,10 +1,11 @@
 import requests
 import logging
 from datetime import datetime
+from pydantic import ValidationError
 from django.db import DatabaseError
 
 from items.models.db_models import Item, PriceHistory
-from items.models.pydantic_models import ItemDetail, CexItemData, CexItemResponse
+from items.models.pydantic_models import CexItemApiResponseWrapper, CexIdValidator
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +17,23 @@ def fetch_item(cex_id):
             
         search_url = f'https://wss2.cex.uk.webuy.io/v3/boxes/{cex_id}/detail'
         response = requests.get(search_url)
-        response.raise_for_status()
-        response_json = response.json()
-        
-        item_response = CexItemResponse(**response_json)
         
         if not data:
             logger.warning("Fetched item returned no data")
             return None
         
+        response.raise_for_status()
+        
+        response_json = response.json()
+        
+        validated_response = CexItemApiResponseWrapper.model_validate_json(response_json)
+
         logger.info("Successfully fetched item with CEX ID %s", cex_id)
-        return data
+        return validated_response.response.data
+    
+    except ValidationError as e:
+        logger.exception("Error validating API response", e)
+        return None
     except requests.exceptions.HTTPError as e:
         logger.exception("HTTP Error when fetching item by CEX ID %s: %s", cex_id, e)
         return None
