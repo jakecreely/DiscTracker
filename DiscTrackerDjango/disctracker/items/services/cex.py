@@ -23,8 +23,8 @@ def fetch_item(cex_id):
         search_url = f'{CEX_API_BASE_URL}/{cex_id}/detail'
         response = requests.get(search_url)
         
-        if not data:
-            logger.warning("Fetched item returned no data")
+        if response.status_code == 404:
+            logger.warning("CEX with ID %s not found", cex_id)
             return None
         
         response.raise_for_status()
