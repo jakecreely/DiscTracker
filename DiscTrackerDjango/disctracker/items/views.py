@@ -4,7 +4,7 @@ from django.http import Http404
 from datetime import datetime
 import logging
 
-from .models import Item, PriceHistory
+from items.models.db_models import Item, PriceHistory
 from items.services import cex 
 
 logger = logging.getLogger(__name__)
