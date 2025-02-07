@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.db import DatabaseError
 from unittest.mock import patch
 from items.services import cex
-from items.models import Item
+from items.models.db_models import Item
 
 class TestCexServiceFetchItem(TestCase):
     @patch('items.services.cex.requests.get')
@@ -229,14 +229,14 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         
         self.assertIsNone(item)
     
-    @patch("items.models.Item.objects.get_or_create")
+    @patch("items.models.db_models.Item.objects.get_or_create")
     def test_create_or_update_item_database_error(self, mock_get_or_create):
         mock_get_or_create.side_effect = DatabaseError
         item = cex.create_or_update_item(self.valid_fetched_item_data)
         
         self.assertIsNone(item)
     
-    @patch("items.models.Item.objects.get_or_create")
+    @patch("items.models.db_models.Item.objects.get_or_create")
     def test_create_or_update_item_unexpected_error(self, mock_get_or_create):
         mock_get_or_create.side_effect = Exception
         item = cex.create_or_update_item(self.valid_fetched_item_data)
@@ -277,7 +277,7 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
         
         self.assertIsNone(price_entry)
     
-    @patch("items.models.PriceHistory.objects.create")
+    @patch("items.models.db_models.PriceHistory.objects.create")
     def test_create_price_history_entry_database_error(self, mock_create):
         mock_create.side_effect = DatabaseError
         
@@ -285,7 +285,7 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
         
         self.assertIsNone(price_entry)
         
-    @patch("items.models.PriceHistory.objects.create")
+    @patch("items.models.db_models.PriceHistory.objects.create")
     def test_create_price_history_entry_unexpected_error(self, mock_create):
         mock_create.side_effect = Exception
         
