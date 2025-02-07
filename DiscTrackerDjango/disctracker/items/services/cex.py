@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from django.db import DatabaseError
 
 from items.models.db_models import Item, PriceHistory
-from items.models.pydantic_models import CexItemApiResponseWrapper, CexIdValidator
+from items.models.pydantic_models import CexItemApiResponseWrapper, CexIdValidator, CexApiItemDetail
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,8 @@ def fetch_item(cex_id):
         search_url = f'{CEX_API_BASE_URL}/{cex_id}/detail'
         response = requests.get(search_url)
         
+        logger.info(response.status_code)
+        
         if response.status_code == 404:
             logger.warning("CEX with ID %s not found", cex_id)
             return None
@@ -31,9 +33,11 @@ def fetch_item(cex_id):
         
         response_json = response.json()
         
-        validated_response = CexItemApiResponseWrapper.model_validate_json(response_json)
+        logger.info(response_json)
+        
+        validated_response = CexItemApiResponseWrapper.model_validate(response_json)
 
-        box_details = validated_response.response.data
+        box_details = validated_response.response.data.boxDetails
         
         if len(box_details) == 1:
             logger.info("Successfully fetched item with CEX ID %s", cex_id)
@@ -55,58 +59,52 @@ def fetch_item(cex_id):
         logger.exception("An unexpected error occurred for fetching item by CEX ID %s: %s", cex_id, e)
         return None
 
-def create_or_update_item(cex_data):
-    if cex_data is None:
+# Only accepts CEX API Item Response
+def create_or_update_item(item_data):
+    if item_data is None:
         logger.error("Cex data is None, cannot create item")  
         return None
-        
+    
     try:
-        #TODO: Add validation for cex_data
-        logger.info("Extracting data from cex_data")  
-        box_details = cex_data["boxDetails"][0]
+        validated_item_data = CexApiItemDetail.model_validate(item_data) # Check if json then call model_validate_json
 
-        cex_id = box_details.get("boxId")
-        if not cex_id:
-            logger.error("Missing boxId in cex_data")  
-            return None
-        
-        title = box_details.get("boxName")
-        sell_price = box_details.get("sellPrice")
-        exchange_price = box_details.get("exchangePrice")
-        cash_price = box_details.get("cashPrice")
+        cex_id = validated_item_data.boxId # TODO: Validate box_id using regex before
 
-        logger.info("Fetching or creating item in database")  
+        logger.info("Creating item in database")  
         item, created = Item.objects.get_or_create(
             cex_id=cex_id,
             defaults={
-                "title": title,
-                "sell_price": sell_price,
-                "exchange_price": exchange_price,
-                "cash_price": cash_price,
+                "title": validated_item_data.boxName,
+                "sell_price": validated_item_data.sellPrice,
+                "exchange_price": validated_item_data.exchangePrice,
+                "cash_price": validated_item_data.cashPrice,
                 "last_checked": datetime.now(),
             }
         )
-        
-        if not created:
+                
+        if created:
+            logger.info("Created item %s in database", cex_id)    
+            return item
+        else:
             logger.info("Updating item %s in database", cex_id)  
-            item.title = box_details.get("boxName", item.title)
-            item.sell_price = box_details.get("sellPrice", item.sell_price)
-            item.exchange_price = box_details.get("exchangePrice", item.exchange_price)
-            item.cash_price = box_details.get("cashPrice", item.cash_price)
+            item.title = validated_item_data.boxName
+            item.sell_price = validated_item_data.sellPrice
+            item.exchange_price = validated_item_data.exchangePrice
+            item.cash_price = validated_item_data.cashPrice
             item.last_checked = datetime.now()
             item.save()
             logger.info("Updated item %s in database", cex_id)
-        else:
-            logger.info("Created item %s in database", cex_id)
-            
-        return item
+            return item
+    except ValidationError as e:
+        logger.exception("Error validating item data", e)
+        return None
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         return None
     except Exception as e:
         logger.exception("An unexpected error occured: %s", e)
         return None
-    
+
 def create_price_history_entry(item):
     if not item:
         logger.error("Item is None, cannot create price history entry")
