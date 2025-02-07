@@ -5,7 +5,7 @@ class CexIdValidator(BaseModel):
     cex_id: str = Field(pattern=r'^[A-Za-z0-9]+$')
 
 class CexApiItemDetail(BaseModel):
-    boxId: str
+    boxId: str = Field(..., pattern=r'^[A-Za-z0-9]+$')    
     boxName: str
     sellPrice: float 
     exchangePrice: float
