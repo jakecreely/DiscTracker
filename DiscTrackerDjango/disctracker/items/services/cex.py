@@ -33,8 +33,14 @@ def fetch_item(cex_id):
         
         validated_response = CexItemApiResponseWrapper.model_validate_json(response_json)
 
-        logger.info("Successfully fetched item with CEX ID %s", cex_id)
-        return validated_response.response.data
+        box_details = validated_response.response.data
+        
+        if len(box_details) == 1:
+            logger.info("Successfully fetched item with CEX ID %s", cex_id)
+            return box_details[0]
+        else:
+            logger.error("Box Detail contains more than one element (%s)", len(box_details))
+            return None
     
     except ValidationError as e:
         logger.exception("Error validating API response", e)
