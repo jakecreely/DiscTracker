@@ -18,13 +18,13 @@ def index(request):
             return render(request, "items/index.html", context)
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)
-            return render(request, "items/error.html", {"message": "Database error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "Database error occurred: " + str(e)})
         except Exception as e: 
             logger.exception("An unexpected error occured: %s", e)
-            return render(request, "items/error.html", {"message": "An unexpected error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "An unexpected error occurred: " + str(e)})
     else:
         logger.warning("Invalid request method (%s) - GET required", request.method)
-        return render(request, "items/error.html", {"message": "Invalid request method - GET required"})
+        return render(request, "error.html", {"message": "Invalid request method - GET required"})
         
 
 def detail(request, item_id):
@@ -36,16 +36,16 @@ def detail(request, item_id):
             return render(request, "items/detail.html", {"item": item, "price_history": price_history})
         except Http404 as e:
             logger.exception("Error fetching item by item_id %s: %s", item_id, e)
-            return render(request, "items/error.html", {"message": "Error fetching item by item_id: " + str(e)})
+            return render(request, "error.html", {"message": "Error fetching item by item_id: " + str(e)})
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)
-            return render(request, "items/error.html", {"message": "Database error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "Database error occurred: " + str(e)})
         except Exception as e:
             logger.exception("An unexpected error occured: %s", e)
-            return render(request, "items/error.html", {"message": "An unexpected error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "An unexpected error occurred: " + str(e)})
     else:
         logger.warning("Invalid request method (%s) - GET required")
-        return render(request, "items/error.html", {"message": "Invalid request method - GET required"})
+        return render(request, "error.html", {"message": "Invalid request method - GET required"})
 
 def price_history(request):
     if request.method == "GET":
@@ -55,16 +55,16 @@ def price_history(request):
             return render(request, "items/price_history.html", {"item": price_history})
         except Http404 as e:
             logger.exception("Error fetching price history: %s", e)
-            return render(request, "items/error.html", {"message": "Error fetching price history: " + str(e)})
+            return render(request, "error.html", {"message": "Error fetching price history: " + str(e)})
         except DatabaseError as e:  
             logger.exception("Database error occured: %s", e)        
-            return render(request, "items/error.html", {"message": "Database error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "Database error occurred: " + str(e)})
         except Exception as e:
             logger.exception("An unexpected error occured: %s", e)
-            return render(request, "items/error.html", {"message": "An unexpected error occurred: " + str(e)})   
+            return render(request, "error.html", {"message": "An unexpected error occurred: " + str(e)})   
     else:
         logger.warning("Invalid request method (%s) - GET required")
-        return render(request, "items/error.html", {"message": "Invalid request method - GET required"})
+        return render(request, "error.html", {"message": "Invalid request method - GET required"})
         
 def add_item_from_cex(request):
     if request.method == "POST":
@@ -93,13 +93,13 @@ def add_item_from_cex(request):
             return redirect("items:index")
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)        
-            return render(request, "items/error.html", {"message": "Database error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "Database error occurred: " + str(e)})
         except Exception as e: 
             logger.exception("An unexpected error occured: %s", e)
-            return render(request, "items/error.html", {"message": "An unexpected error occurred: " + str(e)})
+            return render(request, "error.html", {"message": "An unexpected error occurred: " + str(e)})
     else:
         logger.warning("Invalid request method (%s) - POST required")
-        return render(request, "items/error.html", {"message": "Invalid request method - POST required"})
+        return render(request, "error.html", {"message": "Invalid request method - POST required"})
     
 def update_item_prices(request):
     try:
@@ -109,4 +109,4 @@ def update_item_prices(request):
         return redirect("items:index")
     except Exception as e:
         logger.exception("An unexpected error occured: %s", e)
-        return render(request, "items/error.html", {"message": "An unexpected error occurred: " + str(e)})
+        return render(request, "error.html", {"message": "An unexpected error occurred: " + str(e)})
