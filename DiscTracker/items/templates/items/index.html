@@ -5,10 +5,7 @@
 {% block content %}
 {% load crispy_forms_tags %}
 {% crispy add_item_form add_item_form.helper %}
-<form action="{% url 'items:update-item-prices' %}" method="post">
-    {% csrf_token %}
-    <input type="submit" value="Update Item Prices">
-</form>
+{% crispy update_item_prices_form update_item_prices_form.helper %}
 {% if items_list %}
     <ul>
     {% for item in items_list %}

@@ -19,5 +19,12 @@ class AddItemForm(forms.Form):
     )
 
 class UpdateItemPrices(forms.Form):
-    # submit button
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = "id-updateItemPricesForm"
+        self.helper.form_class = "mainForms"
+        self.helper.form_method = "post"
+        self.helper.form_action = "update-item-prices"
+
+        self.helper.add_input(Submit("submit", "Update Item Prices"))
