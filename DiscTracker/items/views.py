@@ -5,6 +5,7 @@ import logging
 
 from items.models.db_models import Item, PriceHistory
 from items.services import cex 
+from items.forms import AddItemForm
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ def index(request):
         try:          
             logger.info("Fetching all items for index view")  
             items_list = Item.objects.all()
-            context = {"items_list": items_list}
+            context = {"items_list": items_list, "add_item_form": AddItemForm}
             return render(request, "items/index.html", context)
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)
