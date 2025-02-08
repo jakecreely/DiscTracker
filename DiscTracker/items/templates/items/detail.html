@@ -1,0 +1,45 @@
+{% extends "master.html" %}
+
+{% block title %}Item Details{% endblock %}
+
+{% block content %}
+{% if item %}
+    <ul>
+        <li>{{ item.title }}</li>
+        <li>Sell Price: {{ item.sell_price }}</li>
+        <li>Exchange Price: {{ item.exchange_price }}</li>
+        <li>Cash Price: {{ item.cash_price }}</li>
+    </ul>
+{% else %}
+    <p>No item found.</p>
+{% endif %}
+{% if price_history %}
+<h2>Price History</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Date Checked</th>
+            <th>Sell Price</th>
+            <th>Exchange Price</th>
+            <th>Cash Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for history in price_history %}
+        <tr>
+            <td>{{ history.date_checked }}</td>
+            <td>{{ history.sell_price }}</td>
+            <td>{{ history.exchange_price }}</td>
+            <td>{{ history.cash_price }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No price history available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No price history</p>
+{% endif %}
+{% endblock %}

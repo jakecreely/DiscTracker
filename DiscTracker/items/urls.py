@@ -10,8 +10,8 @@ urlpatterns = [
     # ex: /discs/1
     path("<str:item_id>/", views.detail, name="detail"),
     
-    # ex: /discs/price-history/1 
-    path("price-history/<str:item_id>/", views.price_history, name="price-history"),
+    # ex: /discs/price-history/
+    path("price-history", views.price_history, name="price-history"),
 
     # ex: /discs/add-item
     path("add-item", views.add_item_from_cex, name="add-item"),
