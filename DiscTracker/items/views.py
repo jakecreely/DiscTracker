@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 from django.db import DatabaseError
 from django.http import Http404
+from django.core.paginator import Paginator
 import logging
 
 from items.models.db_models import Item, PriceHistory
@@ -14,11 +15,20 @@ def index(request):
         try:          
             logger.info("Fetching all items for index view")  
             items_list = Item.objects.all()
+            
+            NUMBER_OF_ITEMS_PER_PAGE = 9
+            paginator = Paginator(items_list, NUMBER_OF_ITEMS_PER_PAGE)
+
+            page_number = request.GET.get("page")
+            page_obj = paginator.get_page(page_number)
+            
             context = {
-                "items_list": items_list, 
+                "items_list": page_obj.object_list,
+                "page_obj": page_obj,
                 "add_item_form": AddItemForm,
                 "update_item_prices_form": UpdateItemPrices
             }
+            
             return render(request, "items/index.html", context)
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)

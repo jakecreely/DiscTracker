@@ -29,6 +29,9 @@
             {% endfor %}
         </div>
     </div>
+
+    {% include 'partials/pagination.html' %}
+
 {% else %}
     <div class="alert alert-warning text-center" role="alert">
         No items available at the moment.
