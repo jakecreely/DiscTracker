@@ -7,12 +7,31 @@
 {% crispy add_item_form add_item_form.helper %}
 {% crispy update_item_prices_form update_item_prices_form.helper %}
 {% if items_list %}
-    <ul>
-    {% for item in items_list %}
-        <li><a href="{% url 'items:detail' item.id %}">{{ item.title }}</a></li>
-    {% endfor %}
-    </ul>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Items</h2>
+
+        <div class="row">
+            {% for item in items_list %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">{{ item.title }}</h5>
+                            
+                            <p class="card-text">
+                                <strong>Sell Price:</strong> £{{ item.sell_price }}<br>
+                                <strong>Exchange Price:</strong> £{{ item.exchange_price }}<br>
+                                <strong>Cash Price:</strong> £{{ item.cash_price }}
+                            </p>
+                            <a href="{% url 'items:detail' item.id %}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 {% else %}
-    <p>No items are available.</p>
+    <div class="alert alert-warning text-center" role="alert">
+        No items available at the moment.
+    </div>
 {% endif %}
 {% endblock %}
