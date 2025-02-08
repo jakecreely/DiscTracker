@@ -23,7 +23,6 @@ def fetch_item(cex_id):
         search_url = f'{CEX_API_BASE_URL}/{cex_id}/detail'
         response = requests.get(search_url)
         
-        logger.info(response.status_code)
         
         if response.status_code == 404:
             logger.warning("CEX with ID %s not found", cex_id)
@@ -32,8 +31,6 @@ def fetch_item(cex_id):
         response.raise_for_status()
         
         response_json = response.json()
-        
-        logger.info(response_json)
         
         validated_response = CexItemApiResponseWrapper.model_validate(response_json)
 
