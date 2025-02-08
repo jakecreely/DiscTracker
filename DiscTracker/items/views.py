@@ -9,6 +9,7 @@ import json
 from items.models.db_models import Item, PriceHistory
 from items.services import cex 
 from items.forms import AddItemForm, UpdateItemPrices
+from items.filters import ItemFilter
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,11 @@ def index(request):
 
     try:          
         logger.info("Fetching all items for index view")  
-        items_list = Item.objects.all().order_by("title")
+        
+        item_filter = ItemFilter(request.GET, queryset=Item.objects.all().order_by("title"))
         
         NUMBER_OF_ITEMS_PER_PAGE = 9
-        paginator = Paginator(items_list, NUMBER_OF_ITEMS_PER_PAGE)
+        paginator = Paginator(item_filter.qs, NUMBER_OF_ITEMS_PER_PAGE)
 
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
@@ -32,7 +34,8 @@ def index(request):
             "items_list": page_obj.object_list,
             "page_obj": page_obj,
             "add_item_form": AddItemForm,
-            "update_item_prices_form": UpdateItemPrices
+            "update_item_prices_form": UpdateItemPrices,
+            "filter": item_filter
         }
         
         return render(request, "items/index.html", context)
