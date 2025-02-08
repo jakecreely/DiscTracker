@@ -11,6 +11,12 @@
 {% endif %}
 {% load crispy_forms_tags %}
 {% crispy add_item_form add_item_form.helper %}
+<div class="d-flex justify-content-end mb-4">
+    <form method="GET" action="" class="form-inline">
+        {{ filter.form|crispy }}
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+    </form>
+</div>
 {% if items_list %}
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">

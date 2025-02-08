@@ -3,6 +3,7 @@ from django.db import DatabaseError
 from django.http import Http404, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
 import logging
 
 from items.models.db_models import Item, PriceHistory
@@ -10,9 +11,9 @@ from items.services import cex
 from items.forms import AddItemForm, UpdateItemPrices
 from items.tasks import update_prices_task
 from items.permissions import is_admin
+from items.filters import ItemFilter
 
 logger = logging.getLogger(__name__)
-
 
 @login_required
 def index(request):
@@ -23,13 +24,22 @@ def index(request):
 
     try:
         logger.info("Fetching all items for index view")
-        page_obj = cex.fetch_user_items(request.user, request.GET.get("page"))
+        item_list = cex.fetch_user_items(request.user, request.GET.get("page"))
+
+        NUMBER_OF_ITEMS_PER_PAGE=9
+        item_filter = ItemFilter(request.GET, queryset=item_list)
+
+        paginator = Paginator(item_filter.qs, NUMBER_OF_ITEMS_PER_PAGE)
+
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
 
         context = {
             "items_list": page_obj.object_list,
             "page_obj": page_obj,
             "add_item_form": AddItemForm,
             "update_item_prices_form": UpdateItemPrices,
+            "filter": item_filter
         }
 
         return render(request, "items/index.html", context)
@@ -77,7 +87,7 @@ def price_history(request):
 
     try:
         logger.info("Fetching price history for price_history view")
-        # TODO: Verify this is working
+        # TODO: Verify this is working 
         price_history = get_list_or_404(PriceHistory, item__user=request.user)
         return render(request, "items/price_history.html", {"item": price_history})
     except Http404 as e:

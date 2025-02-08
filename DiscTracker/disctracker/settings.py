@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "items.apps.ItemsConfig",
+    "django_filters",
     "crispy_forms",
     "crispy_bootstrap4",
     "django_celery_beat",

@@ -3,7 +3,6 @@ import logging
 from datetime import date
 from pydantic import ValidationError
 from django.db import DatabaseError
-from django.core.paginator import Paginator
 
 from items.models.db_models import Item, PriceHistory
 from items.models.pydantic_models import (
@@ -15,7 +14,6 @@ from items.models.pydantic_models import (
 logger = logging.getLogger(__name__)
 
 CEX_API_BASE_URL = "https://wss2.cex.uk.webuy.io/v3/boxes"
-
 
 def fetch_item(cex_id):
     try:
@@ -65,16 +63,10 @@ def fetch_item(cex_id):
         )
         return None
 
-
-def fetch_user_items(user, page_number, items_per_page=9):
+def fetch_user_items(user): 
     items_list = Item.objects.filter(user=user).order_by("title")
-
-    paginator = Paginator(items_list, items_per_page)
-
-    page_obj = paginator.get_page(page_number)
-
-    return page_obj
-
+    
+    return items_list
 
 # Only accepts CEX API Item Response
 def create_or_update_item(item_data, user):
