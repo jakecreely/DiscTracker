@@ -3,6 +3,11 @@
 {% block title %}List of Items{% endblock %}
 
 {% block content %}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
 {% load crispy_forms_tags %}
 {% crispy add_item_form add_item_form.helper %}
 {% if items_list %}
