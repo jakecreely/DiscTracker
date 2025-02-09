@@ -130,6 +130,7 @@ def add_item_from_cex(request):
             messages.error(request, f"Could not create price history for item with ID '{cex_id}'.")
             return redirect("items:index")
         
+        messages.info(request, f"Added/updated {item.title}!")
         logger.info("Redirecting to items index")  
         return redirect("items:index")
     except DatabaseError as e:
