@@ -19,7 +19,7 @@ def index(request):
 
     try:          
         logger.info("Fetching all items for index view")  
-        items_list = Item.objects.all()
+        items_list = Item.objects.all().order_by("title")
         
         NUMBER_OF_ITEMS_PER_PAGE = 9
         paginator = Paginator(items_list, NUMBER_OF_ITEMS_PER_PAGE)
