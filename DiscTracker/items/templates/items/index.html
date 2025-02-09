@@ -5,11 +5,14 @@
 {% block content %}
 {% load crispy_forms_tags %}
 {% crispy add_item_form add_item_form.helper %}
-{% crispy update_item_prices_form update_item_prices_form.helper %}
 {% if items_list %}
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Collection</h2>
-
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-center flex-grow-1">Collection</h2>
+            <div>
+                {% crispy update_item_prices_form update_item_prices_form.helper %}
+            </div>
+        </div>
         <div class="row">
             {% for item in items_list %}
                 <div class="col-md-4 mb-4">
