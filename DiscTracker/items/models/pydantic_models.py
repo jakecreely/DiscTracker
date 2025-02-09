@@ -1,4 +1,5 @@
 from typing import List, Optional
+from decimal import Decimal
 from pydantic import BaseModel, Field
 
 class CexIdValidator(BaseModel):
@@ -7,23 +8,23 @@ class CexIdValidator(BaseModel):
 class CexApiItemDetail(BaseModel):
     boxId: str = Field(..., pattern=r'^[A-Za-z0-9]+$')    
     boxName: str
-    sellPrice: float 
-    exchangePrice: float
-    cashPrice: float
+    sellPrice: Decimal 
+    exchangePrice: Decimal
+    cashPrice: Decimal
     
 class CexApiItemDetailCreateUpdate(BaseModel):
     boxId: str
     boxName: Optional[str] = None
-    sellPrice: Optional[float] = None 
-    exchangePrice: Optional[float] = None
-    cashPrice: Optional[float] = None
+    sellPrice: Optional[Decimal] = None 
+    exchangePrice: Optional[Decimal] = None
+    cashPrice: Optional[Decimal] = None
 
 class ItemDetailUpdate(BaseModel):
     cex_id: str
     title: Optional[str] = None
-    sell_price: Optional[float] = None
-    exchange_price: Optional[float] = None
-    cash_price: Optional[float] = None
+    sell_price: Optional[Decimal] = None
+    exchange_price: Optional[Decimal] = None
+    cash_price: Optional[Decimal] = None
         
 class BoxDetailsWrapper(BaseModel):
     boxDetails: List[CexApiItemDetail]
