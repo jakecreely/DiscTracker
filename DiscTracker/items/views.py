@@ -144,7 +144,18 @@ def add_item_from_cex(request):
 def update_item_prices(request):
     try:
         logger.info("Updating item prices")  
-        cex.check_price_updates()
+        updated_prices = cex.check_price_updates()
+        
+        if update_item_prices is None: # Something went wrong
+            logger.info("Updated prices returned None %s", cex_id)  
+            messages.error(request, f"Could not update item prices. Please try again later.")
+            return redirect("items:index")
+        
+        if len(updated_prices) == 0: # Went ok, just no items updated
+            messages.info(request, f"No price changes detected.")
+        else:
+            messages.info(request, f"Prices updated for {len(updated_prices)} items.")
+        
         logger.info("Redirecting to items index")  
         return redirect("items:index")
     except Exception as e:
