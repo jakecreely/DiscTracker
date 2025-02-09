@@ -1,6 +1,6 @@
 from django import forms
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.helper import FormHelper, Layout
+from crispy_forms.layout import Submit, Field
 
 class AddItemForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -10,9 +10,11 @@ class AddItemForm(forms.Form):
         self.helper.form_class = "mainForms"
         self.helper.form_method = "post"
         self.helper.form_action = "add-item"
+        self.helper.layout = Layout(
+            Field("cex_id", placeholder="Enter CEX ID..."),
+            Submit("submit", "Add Item"),
+        )
 
-        self.helper.add_input(Submit("submit", "Add Item"))
-    
     cex_id = forms.CharField(
         label="CEX ID", 
         max_length=100
@@ -26,5 +28,6 @@ class UpdateItemPrices(forms.Form):
         self.helper.form_class = "mainForms"
         self.helper.form_method = "post"
         self.helper.form_action = "update-item-prices"
-
-        self.helper.add_input(Submit("submit", "Update Item Prices"))
+        self.helper.layout = Layout(
+            Submit("submit", "Update Item Prices", css_class="btn btn-secondary"),
+        )
