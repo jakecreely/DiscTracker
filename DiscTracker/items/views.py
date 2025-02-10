@@ -4,6 +4,7 @@ from django.http import Http404
 from django.contrib import messages
 from django.core.paginator import Paginator
 import logging
+import json
 
 from items.models.db_models import Item, PriceHistory
 from items.services import cex 
@@ -54,7 +55,28 @@ def detail(request, item_id):
         logger.info("Fetching item %s for detail view", item_id)  
         item = get_object_or_404(Item, pk=item_id)
         price_history = item.price_history.all()
-        return render(request, "items/detail.html", {"item": item, "price_history": price_history})
+
+        labels = []
+        sell_prices = []
+        exchange_prices = []
+        cash_prices = []
+
+        for entry in price_history:
+            labels.append(entry.date_checked.strftime("%Y-%m-%d")) # Has to be string for json
+            sell_prices.append(float(entry.sell_price)) # Has to change from Decimal to float to json serialise
+            exchange_prices.append(float(entry.exchange_price)) # Has to change from Decimal to float to json serialise
+            cash_prices.append(float(entry.cash_price)) # Has to change from Decimal to float to json serialise
+
+        data = {
+            "labels": labels,
+            "datasets": [
+                {"label": "Sell Price", "data": sell_prices, "borderColor": "rgba(255, 99, 132, 1)", "fill": False},
+                {"label": "Exchange Price", "data": exchange_prices, "borderColor": "rgba(54, 162, 235, 1)", "fill": False},
+                {"label": "Cash Price", "data": cash_prices, "borderColor": "rgba(75, 192, 192, 1)", "fill": False},
+            ],
+        }
+        
+        return render(request, "items/detail.html", {"item": item, "price_history": price_history, "data": json.dumps(data)})
     except Http404 as e:
         logger.exception("Error fetching item by item_id %s: %s", item_id, e)
         messages.error(request, f"Item with ID '{item_id}' not found.")
