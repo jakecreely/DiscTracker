@@ -1,9 +1,10 @@
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 from django.db import DatabaseError
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.contrib import messages
 from django.core.paginator import Paginator
 import logging
+import json
 
 from items.models.db_models import Item, PriceHistory
 from items.services import cex 
@@ -53,8 +54,7 @@ def detail(request, item_id):
     try:            
         logger.info("Fetching item %s for detail view", item_id)  
         item = get_object_or_404(Item, pk=item_id)
-        price_history = item.price_history.all()
-        return render(request, "items/detail.html", {"item": item, "price_history": price_history})
+        return render(request, "items/detail.html", {"item": item})
     except Http404 as e:
         logger.exception("Error fetching item by item_id %s: %s", item_id, e)
         messages.error(request, f"Item with ID '{item_id}' not found.")
@@ -163,3 +163,44 @@ def update_item_prices(request):
         logger.exception("An unexpected error occured: %s", e)
         messages.error(request, "An unexpected error occurred. Please try again later.")
         return redirect("items:index")
+
+def item_price_chart(request, item_id):
+    try:
+        item = get_object_or_404(Item, pk=item_id)
+        price_history = item.price_history.all().order_by("date_checked")
+
+        if not price_history.exists():
+            logger.warning(f"No price history found for item {item_id}")
+            return JsonResponse({"error": f"No price history available for item {item_id}"}, status=404)
+
+        labels = []
+        sell_prices = []
+        exchange_prices = []
+        cash_prices = []
+
+        for entry in price_history:
+            labels.append(entry.date_checked.strftime("%Y-%m-%d")) # Has to be string for json
+            sell_prices.append(float(entry.sell_price)) # Has to change from Decimal to float to json serialise
+            exchange_prices.append(float(entry.exchange_price)) # Has to change from Decimal to float to json serialise
+            cash_prices.append(float(entry.cash_price)) # Has to change from Decimal to float to json serialise
+
+        data = {
+            "labels": labels,
+            "datasets": [
+                {"label": "Sell Price", "data": sell_prices, "borderColor": "rgba(255, 99, 132, 1)", "fill": False},
+                {"label": "Exchange Price", "data": exchange_prices, "borderColor": "rgba(54, 162, 235, 1)", "fill": False},
+                {"label": "Cash Price", "data": cash_prices, "borderColor": "rgba(75, 192, 192, 1)", "fill": False},
+            ],
+        }
+
+        return JsonResponse(data)
+
+    except Http404:
+        logger.exception(f"Item with ID {item_id} not found")
+        return JsonResponse({"error": "Item not found."}, status=404)
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)   
+        return JsonResponse({"error": "Database error. Please try again later."}, status=500)
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        return JsonResponse({"error": "An unexpected error occurred. Please try again later."}, status=500)
