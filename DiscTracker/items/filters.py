@@ -15,8 +15,8 @@ class ItemFilter(django_filters.FilterSet):
     class Meta:
         model = Item
         fields = {
-            'title': ['exact', 'icontains'],
-            'sell_price': ['lt', 'gt', 'exact'],
-            'exchange_price': ['lt', 'gt', 'exact'],
-            'cash_price': ['lt', 'gt', 'exact'],
+            'title': ['icontains'],
+            'sell_price': ['lt', 'gt'],
+            'exchange_price': ['lt', 'gt'],
+            'cash_price': ['lt', 'gt'],
         }
