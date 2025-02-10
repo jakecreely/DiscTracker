@@ -1,0 +1,23 @@
+<div id="chart-container" hx-get="{% url 'items:item-price-chart' item.id %}" hx-trigger="load" hx-target="#chart-container">
+    <p id="loading-message">Loading chart...</p>
+</div>
+
+<script>
+    function renderChart(data) {
+        let ctx = document.getElementById("priceChart").getContext("2d");
+        new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: { responsive: true, scales: { y: { beginAtZero: false } } }
+        });
+    }
+
+    document.addEventListener("htmx:afterSwap", function(event) {
+        if (event.detail.target.id === "chart-container") {
+            let chartData = JSON.parse(event.detail.xhr.responseText);
+            
+            document.getElementById("chart-container").innerHTML = '<canvas id="priceChart"></canvas>';
+            renderChart(chartData);
+        }
+    });
+</script>

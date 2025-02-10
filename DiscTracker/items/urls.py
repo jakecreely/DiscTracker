@@ -10,6 +10,8 @@ urlpatterns = [
     # ex: /items/1
     path("<str:item_id>/", views.detail, name="detail"),
     
+    path("<str:item_id>/chart", views.item_price_chart, name="item-price-chart"),
+    
     # ex: /items/price-history/
     path("price-history", views.price_history, name="price-history"),
 

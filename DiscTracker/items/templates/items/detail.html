@@ -1,5 +1,4 @@
 {% extends "master.html" %}
-{% load bootstrap_icons %}
 
 {% block title %}Item Details{% endblock %}
 
@@ -18,30 +17,6 @@
 {% else %}
     <p>No item found.</p>
 {% endif %}
-{% if data %}
 <h2>Item Price History</h2>
-<canvas id="priceChart"></canvas>
-
-<script>
-    var data = JSON.parse('{{ data|safe }}');
-
-    var ctx = document.getElementById('priceChart').getContext('2d');
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels, // Dates
-            datasets: data.datasets // Prices
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: false } // Keep prices realistic
-            }
-        }
-    });
-</script>
-{% else %}
-    <p>No price history</p>
-{% endif %}
+{% include 'items/partials/item_price_chart.html' %}
 {% endblock %}
