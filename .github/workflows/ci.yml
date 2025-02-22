@@ -13,7 +13,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12"]
-
+    defaults:
+      run:
+        working-directory: DiscTracker
     services:
       postgres:
         image: postgres
@@ -62,7 +64,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          
+
       - name: Run Tests
         env:
           DEBUG: ${{ secrets.DEBUG }}
