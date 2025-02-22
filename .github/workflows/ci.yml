@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "feature/deployment-pipeline" ]
   workflow_dispatch:
-    
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -49,5 +49,6 @@ jobs:
         DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
         DATABASE_USER: ${{ secrets.DATABASE_USER }}
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        PORT: ${{ secrets.PORT }}
       run: |
         python manage.py test
