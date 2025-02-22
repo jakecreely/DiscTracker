@@ -27,13 +27,22 @@ jobs:
         id: login-to-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, tag, and push Django Image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
           ECR_REPOSITORY: disc_tracker
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f DiscTracker/Dockerfile DiscTracker/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Build, tag, and push Nginx Image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+          ECR_REPOSITORY: disc_tracker_nginx
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f DiscTracker/nginx/Dockerfile DiscTracker/nginx/
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 #   deploy-infra:
