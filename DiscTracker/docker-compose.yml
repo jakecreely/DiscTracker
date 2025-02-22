@@ -1,31 +1,35 @@
-version: '1'
-
 services:
-  app:
+  disc_tracker:
     build: .
-    container_name: disc-tracker
+    container_name: disc-tracker_app
+    restart: always
+    depends_on:
+      - db
+
     volumes:
       - .:/app
     ports:
-      - "4029:4029"
-    environment:
-      - FLASK_APP=main.py
-      - DATABASE_URL=postgresql://username:password@db:5432/disc-tracker
-    depends_on:
-      - db
-    command: python main.py
+      - "8000:8000"
 
   db:
     image: postgres:13
-    container_name: postgres_db
-    environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: disc-tracker
+    container_name: disc-tracker_db
+    restart: always
+    env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    container_name: disc-tracker_nginx
+    restart: always
+    depends_on:
+      - disc_tracker
     ports:
-      - "5432:5432"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
 
 volumes:
   pg_data:
