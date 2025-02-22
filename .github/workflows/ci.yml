@@ -5,7 +5,8 @@ on:
     branches: [ "feature/deployment-pipeline" ]
   pull_request:
     branches: [ "feature/deployment-pipeline" ]
-
+  workflow_dispatch:
+    
 jobs:
   build:
     runs-on: ubuntu-latest
