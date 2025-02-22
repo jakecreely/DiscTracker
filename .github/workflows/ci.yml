@@ -16,6 +16,19 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: django
+          POSTGRES_PASSWORD: django
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd "pg_isready -U django"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -27,5 +40,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Run Tests
+      env:
+        DATABASE_URL: postgres://django:django@postgres/test_db
       run: |
         python manage.py test
