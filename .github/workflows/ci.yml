@@ -42,7 +42,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
         
     - name: Install Dependencies
       run: |
@@ -111,3 +110,32 @@ jobs:
           push: true
           context: ./DiscTracker
           tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
+
+  integration_tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    defaults:
+      run:
+        working-directory: DiscTracker
+
+    steps:
+    - name: "Checkout Repo"
+      uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Integration Tests
+      run: DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker-compose up --abort-on-container-exit

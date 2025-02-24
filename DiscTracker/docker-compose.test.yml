@@ -1,7 +1,7 @@
 
 services:
   disc_tracker:
-    build: .
+    image: ${DOCKER_IMAGE}
     container_name: disc-tracker_app
     restart: always
     depends_on:
@@ -35,7 +35,7 @@ services:
       - disc_tracker
 
   test:
-    build: .
+    image: ${DOCKER_IMAGE}
     container_name: disc-tracker_tests
     depends_on:
       - disc_tracker
