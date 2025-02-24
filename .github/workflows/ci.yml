@@ -112,6 +112,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
 
   integration_tests:
+    needs: build_and_push
     runs-on: ubuntu-latest
 
     strategy:
