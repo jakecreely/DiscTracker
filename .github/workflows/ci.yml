@@ -112,7 +112,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
 
   integration_tests:
-    needs: build_and_push
+    # needs: build_and_push
     runs-on: ubuntu-latest
 
     strategy:
@@ -138,9 +138,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    # DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
+
     - name: Run Integration Tests
       run: |
-        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+        DOCKER_IMAGE=jakecreely/disc-tracker:bcb572c11445301bf979bb47394d8347685e10ef docker compose -f docker-compose.test.yml up --abort-on-container-exit
         docker logs disc-tracker_tests
       env:
         DEBUG: ${{ secrets.DEBUG }}
