@@ -139,8 +139,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Integration Tests
-      run: | 
-        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
+      run: DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
