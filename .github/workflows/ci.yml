@@ -151,3 +151,6 @@ jobs:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
         POSTGRES_DB: db
+
+    - name: Show Test Container Logs
+      run: docker logs disc-tracker_tests
