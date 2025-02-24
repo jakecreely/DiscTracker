@@ -15,7 +15,6 @@ services:
     image: postgres:13
     container_name: disc-tracker_db
     restart: always
-    env_file: .env
     healthcheck:
       test: ["CMD", "pg_isready"]
       interval: 10s

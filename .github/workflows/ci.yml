@@ -25,7 +25,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
+          POSTGRES_DB: db
         ports:
           - 5432:5432
         options: >-
@@ -52,8 +52,8 @@ jobs:
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DATABASE_HOST: localhost
-        DATABASE_NAME: test_db
+        DATABASE_HOST: db
+        DATABASE_NAME: db
         DATABASE_USER: postgres
         DATABASE_PASSWORD: postgres
         DATABASE_PORT: 5432
@@ -138,4 +138,17 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Integration Tests
-      run: DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
+      run: | 
+        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} \ 
+        docker compose -f docker-compose.test.yml up --abort-on-container-exit
+      env:
+        DEBUG: ${{ secrets.DEBUG }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DATABASE_HOST: db
+        DATABASE_NAME: db
+        DATABASE_USER: postgres
+        DATABASE_PASSWORD: postgres
+        DATABASE_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: db
