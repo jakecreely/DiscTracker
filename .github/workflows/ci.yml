@@ -138,4 +138,4 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Integration Tests
-      run: DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker-compose up --abort-on-container-exit
+      run: DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose up --abort-on-container-exit
