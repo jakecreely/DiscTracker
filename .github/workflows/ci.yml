@@ -89,10 +89,6 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
-    defaults:
-      run:
-        working-directory: DiscTracker
-
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -110,4 +106,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          context: ./DiscTracker
           tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
