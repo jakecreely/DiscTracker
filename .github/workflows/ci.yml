@@ -90,6 +90,9 @@ jobs:
         python-version: ["3.12"]
 
     steps:
+      - name: "Checkout Repo"
+        uses: actions/checkout@v4
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       
