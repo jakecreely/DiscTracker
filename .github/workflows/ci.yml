@@ -1,10 +1,8 @@
-name: Django CI
+name: CI
 
 on:
   push:
-    branches: [ "feature/deployment-pipeline" ]
-  pull_request:
-    branches: [ "feature/deployment-pipeline" ]
+    branches: [ "main" ] # Only when code has been merges as it builds and pushes image
   workflow_dispatch:
 
 jobs:
