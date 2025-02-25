@@ -59,6 +59,7 @@ jobs:
         DATABASE_PORT: 5432
       run: |
         python manage.py test tests.unit
+# TODO: CHange to pytest
 
   lint_check: 
     runs-on: ubuntu-latest
@@ -142,7 +143,7 @@ jobs:
 
     - name: Run Integration Tests
       run: |
-        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up -d
+        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -155,23 +156,9 @@ jobs:
         POSTGRES_PASSWORD: postgres
         POSTGRES_DB: db
 
-    - name: Run Django tests
-      run: |
-        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml exec -T disc-tracker_tests python manage.py test tests.integration > ./test_results.txt
-      env:
-        DEBUG: ${{ secrets.DEBUG }}
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DATABASE_HOST: db
-        DATABASE_NAME: db
-        DATABASE_USER: postgres
-        DATABASE_PASSWORD: postgres
-        DATABASE_PORT: 5432
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: db
     - name: Upload Test Logs
       if: always() 
       uses: actions/upload-artifact@v4
       with:
         name: integration-test-logs
-        path: test-results.log
+        path: ./logs/integration_test_results.log
