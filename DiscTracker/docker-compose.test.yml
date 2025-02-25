@@ -5,6 +5,8 @@ services:
     container_name: disc-tracker_app
     restart: always
     environment:
+      DEBUG: ${DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
       DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
@@ -47,6 +49,8 @@ services:
     image: ${DOCKER_IMAGE}
     container_name: disc-tracker_tests
     environment:
+      DEBUG: ${DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
       DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
