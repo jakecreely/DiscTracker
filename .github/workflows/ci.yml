@@ -80,36 +80,36 @@ jobs:
       - name: Run ruff check
         run: ruff check
 
-  build_and_push:
-    needs: unit_tests
-    runs-on: ubuntu-latest
+  # build_and_push:
+  #   needs: unit_tests
+  #   runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.12"]
+  #   strategy:
+  #     matrix:
+  #       python-version: ["3.12"]
 
-    steps:
-      - name: "Checkout Repo"
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: "Checkout Repo"
+  #       uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
       
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
       
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  #     - name: Log in to Docker Hub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          context: ./DiscTracker
-          tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
+  #     - name: Build and push
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         push: true
+  #         context: ./DiscTracker
+  #         tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
 
   integration_tests:
     # needs: build_and_push
@@ -142,7 +142,7 @@ jobs:
 
     - name: Run Integration Tests
       run: |
-        DOCKER_IMAGE=jakecreely/disc-tracker:79fad69787b72290fb0a090aba99f063503287fe docker compose -f docker-compose.test.yml up --abort-on-container-exit
+        DOCKER_IMAGE=jakecreely/disc-tracker:79fad69787b72290fb0a090aba99f063503287fe docker compose -f docker-compose.test.yml up
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
