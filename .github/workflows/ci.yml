@@ -140,8 +140,9 @@ jobs:
 
     - name: Run Integration Tests
       run: |
-        DOCKER_IMAGE=jakecreely/disc-tracker:${{ github.sha }} docker compose -f docker-compose.test.yml up --abort-on-container-exit
+        docker compose -f docker-compose.test.yml up --abort-on-container-exit
       env:
+        DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
         DATABASE_HOST: db
