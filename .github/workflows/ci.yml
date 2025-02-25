@@ -48,7 +48,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run Tests
+    - name: Run Tests With Coverage
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -58,7 +58,19 @@ jobs:
         DATABASE_PASSWORD: postgres
         DATABASE_PORT: 5432
       run: |
-        pytest ./tests/unit
+        coverage run -m pytest ./tests/unit
+
+    - name: Display Coverage Report
+      run: |
+        coverage report
+
+    - name: Enforce Coverage Threshold
+      run: |
+        COVERAGE_PERCENTAGE=$(coverage report | tail -n 1 | awk '{print $4}' | sed 's/%//')
+        if (( $(echo "$COVERAGE_PERCENTAGE < 90" | bc -l) )); then
+          echo "Test coverage is below 90%, current coverage: $COVERAGE_PERCENTAGE%"
+          exit 1
+        fi
 
   lint_check: 
     runs-on: ubuntu-latest
