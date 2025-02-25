@@ -58,8 +58,7 @@ jobs:
         DATABASE_PASSWORD: postgres
         DATABASE_PORT: 5432
       run: |
-        python manage.py test tests.unit
-# TODO: CHange to pytest
+        pytest ./tests/unit
 
   lint_check: 
     runs-on: ubuntu-latest
