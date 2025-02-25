@@ -143,7 +143,7 @@ jobs:
     - name: Run Integration Tests
       run: |
         DOCKER_IMAGE=jakecreely/disc-tracker:bcb572c11445301bf979bb47394d8347685e10ef docker compose -f docker-compose.test.yml up --abort-on-container-exit
-        docker logs disc-tracker_tests
+        docker logs disc-tracker_tests > test-results.log
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -155,10 +155,6 @@ jobs:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
         POSTGRES_DB: db
-
-    - name: Capture Test Logs From Docker Container
-      if: always()
-      run: docker compose -f docker-compose.test.yml logs > test-results.log
 
     - name: Upload Test Logs
       if: always() 
