@@ -61,7 +61,7 @@ services:
       - disc_tracker
       - db
       - nginx
-    command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration | tee /app/logs/integration_test_results.log"]
+    command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration > /app/logs/integration_test_results.log; exit $?"]
     volumes:
       - .:/app
       - ./logs:/app/logs
