@@ -157,8 +157,18 @@ jobs:
 
     - name: Run Django tests
       run: |
-        docker compose exec -T disc-tracker_tests python manage.py test tests.integration > ./test_results.txt
-
+        docker compose -f docker-compose.test.yml exec -T disc-tracker_tests python manage.py test tests.integration > ./test_results.txt
+      env:
+        DEBUG: ${{ secrets.DEBUG }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DATABASE_HOST: db
+        DATABASE_NAME: db
+        DATABASE_USER: postgres
+        DATABASE_PASSWORD: postgres
+        DATABASE_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: db
     - name: Upload Test Logs
       if: always() 
       uses: actions/upload-artifact@v4
