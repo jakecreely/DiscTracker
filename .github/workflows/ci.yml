@@ -157,7 +157,7 @@ jobs:
 
     - name: Wait for the test container to stop
       run: |
-        docker compose -f docker-compose.test.yml wait disc-tracker_tests
+        DOCKER_IMAGE=jakecreely/disc-tracker:d4c92ceff84f0561b0dbdb40f555e27b7d86b085 docker compose -f docker-compose.test.yml wait disc-tracker_tests
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -172,7 +172,7 @@ jobs:
 
     - name: Collect logs from the test container
       run: |
-        docker compose -f docker-compose.test.yml logs disc-tracker_tests > results.log
+        DOCKER_IMAGE=jakecreely/disc-tracker:d4c92ceff84f0561b0dbdb40f555e27b7d86b085 docker compose -f docker-compose.test.yml logs disc-tracker_tests > results.log
       env:
         DEBUG: ${{ secrets.DEBUG }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
