@@ -60,7 +60,6 @@ services:
       - disc_tracker
       - db
       - nginx
-    command: ["/app/scripts/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "test", "tests.integration"] 
     volumes:
       - .:/app
     restart: "no"
