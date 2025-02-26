@@ -1,0 +1,36 @@
+
+services:
+  disc_tracker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: disc-tracker_app
+    restart: always
+    env_file: 
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:13
+    container_name: disc-tracker_db
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    volumes: 
+      - pgdata:/var/lib/postgresql/data 
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
