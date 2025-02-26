@@ -1,0 +1,56 @@
+
+services:
+  disc_tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: disc-tracker_app
+    restart: always
+    env_file:
+      - .env.test
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:13
+    container_name: disc-tracker_db
+    restart: always
+    env_file:
+      - .env.test
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: disc-tracker_nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - disc_tracker
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: disc-tracker_tests
+    env_file:
+      - .env.test
+    depends_on:
+      - disc_tracker
+      - db
+      - nginx
+    command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest"]
+    volumes:
+      - .:/app
+    restart: "no"
