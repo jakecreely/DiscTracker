@@ -120,6 +120,7 @@ jobs:
         with:
           push: true
           context: ./DiscTracker
+          file: ./DiscTracker/Dockerfile.ci
           tags: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
 
   integration_tests:
