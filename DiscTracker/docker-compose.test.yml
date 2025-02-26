@@ -1,17 +1,13 @@
 
 services:
   disc_tracker:
-    image: ${DOCKER_IMAGE}
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     container_name: disc-tracker_app
     restart: always
-    environment:
-      DEBUG: ${DEBUG}
-      SECRET_KEY: ${SECRET_KEY}
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      DATABASE_PORT: ${DATABASE_PORT}
+    env_file:
+      - .env.test
     depends_on:
       - db
     volumes:
@@ -23,10 +19,8 @@ services:
     image: postgres:13
     container_name: disc-tracker_db
     restart: always
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env.test
     healthcheck:
       test: ["CMD", "pg_isready"]
       interval: 10s
@@ -46,21 +40,17 @@ services:
       - disc_tracker
 
   test:
-    image: ${DOCKER_IMAGE}
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     container_name: disc-tracker_tests
-    environment:
-      DEBUG: ${DEBUG}
-      SECRET_KEY: ${SECRET_KEY}
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      DATABASE_PORT: ${DATABASE_PORT}
+    env_file:
+      - .env.test
     depends_on:
       - disc_tracker
       - db
       - nginx
-    command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration"]
+    command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest"]
     volumes:
       - .:/app
     restart: "no"
