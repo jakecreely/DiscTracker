@@ -16,7 +16,7 @@ import os
 
 env = environ.Env()
 
-env_file = os.path.join(os.path.dirname(__file__), '../.env')
+env_file = os.path.join(os.path.dirname(__file__), "../.env")
 environ.Env.read_env(env_file)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -33,10 +33,10 @@ if not os.path.exists(LOGS_DIR):
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -44,13 +44,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'items.apps.ItemsConfig',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "items.apps.ItemsConfig",
     "crispy_forms",
     "crispy_bootstrap4",
 ]
@@ -63,81 +63,83 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'disctracker.urls'
+ROOT_URLCONF = "disctracker.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "disctracker/templates"],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "disctracker/templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'disctracker.wsgi.application'
+WSGI_APPLICATION = "disctracker.wsgi.application"
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": { 
+        "verbose": {
             "format": "{levelname} {asctime} {module} {message}",
-            "style": "{", # How the variables will be formatted - { means str.format()
+            "style": "{",  # How the variables will be formatted - { means str.format()
         },
         "simple": {
-            "format": "{levelname} {message}", # Outputs the log level and then the message
-            "style": "{", # How the string (levelname) and message variable with be formatted - { means str.format()
+            "format": "{levelname} {message}",  # Outputs the log level and then the message
+            "style": "{",  # How the string (levelname) and message variable with be formatted - { means str.format()
         },
     },
     "handlers": {
-        "console": { # Name of the handler
-            "level": "DEBUG", # Handles any logs DEBUG or higher 
-            "class": "logging.StreamHandler", # Logs to a stream
-            "formatter": "simple", # Uses simple formatter
+        "console": {  # Name of the handler
+            "level": "DEBUG",  # Handles any logs DEBUG or higher
+            "class": "logging.StreamHandler",  # Logs to a stream
+            "formatter": "simple",  # Uses simple formatter
         },
-        "django_file": { # Name of the handler
-            "level": "WARNING", # Handles WARNING or higher
-            "class": "logging.FileHandler", # Writes logs to a file
-            "filename": "logs/django_warnings.log", # Path to log file
-            "formatter": "verbose", # Specifies the verbose formatter
+        "django_file": {  # Name of the handler
+            "level": "WARNING",  # Handles WARNING or higher
+            "class": "logging.FileHandler",  # Writes logs to a file
+            "filename": "logs/django_warnings.log",  # Path to log file
+            "formatter": "verbose",  # Specifies the verbose formatter
         },
-        "items_file": { # Name of the handler
-            "level": "ERROR", # Handles ERROR or higher
-            "class": "logging.FileHandler", # Writes logs to a file
-            "filename": "logs/items_errors.log", # Path to log file
-            "formatter": "verbose", # Specifies the verbose formatter
+        "items_file": {  # Name of the handler
+            "level": "ERROR",  # Handles ERROR or higher
+            "class": "logging.FileHandler",  # Writes logs to a file
+            "filename": "logs/items_errors.log",  # Path to log file
+            "formatter": "verbose",  # Specifies the verbose formatter
         },
     },
     "loggers": {
-        "django": { # Generated by django 
-            "handlers": ["console", "django_file"], # Handled by both handlers
+        "django": {  # Generated by django
+            "handlers": ["console", "django_file"],  # Handled by both handlers
             "propagate": True,
         },
-        "django.requests": { #
-            "handlers": ["django_file"], # Outputs to the file handler but not the console
-            "level": "ERROR", # Only ERROR or higher
-            "propagate": False, # Doesn't propagate to django logger won't handle these errors only this logger will
+        "django.requests": {  #
+            "handlers": [
+                "django_file"
+            ],  # Outputs to the file handler but not the console
+            "level": "ERROR",  # Only ERROR or higher
+            "propagate": False,  # Doesn't propagate to django logger won't handle these errors only this logger will
         },
         "items": {  # Custom logger for items app
-            "handlers": ["console", "items_file"], # Logs to both handlers
-            "level": "INFO", # Any messages INFO or higher
-            "propagate": False, # Doesn't propagate to 
+            "handlers": ["console", "items_file"],  # Logs to both handlers
+            "level": "INFO",  # Any messages INFO or higher
+            "propagate": False,  # Doesn't propagate to
         },
     },
 }
@@ -147,12 +149,12 @@ LOGGING = {
 
 DATABASES = {
     "default": {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASSWORD'),
-        'HOST': env('DATABASE_HOST'),
-        'PORT': env('DATABASE_PORT')
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DATABASE_NAME"),
+        "USER": env("DATABASE_USER"),
+        "PASSWORD": env("DATABASE_PASSWORD"),
+        "HOST": env("DATABASE_HOST"),
+        "PORT": env("DATABASE_PORT"),
     }
 }
 
@@ -161,16 +163,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -178,9 +180,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -190,10 +192,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery Configuration Options
+CELERY_BROKER_URL = env("REDIS_URL")
+CELERY_RESULT_BACKEND = env("REDIS_URL")
