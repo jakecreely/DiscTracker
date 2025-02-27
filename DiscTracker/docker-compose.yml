@@ -1,6 +1,6 @@
 
 services:
-  disc_tracker:
+  app:
     build: 
       context: .
       dockerfile: Dockerfile
@@ -35,6 +35,7 @@ services:
     
   redis:
     container_name: disc-tracker_redis
+    restart: always
     image: redis:latest
     ports:
       - '6379:6379' 
@@ -50,7 +51,7 @@ services:
     command: celery -A disctracker worker --loglevel=info
     depends_on:
       - redis
-      - disc_tracker
+      - app
     volumes:
       - .:/app
 
