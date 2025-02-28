@@ -1,0 +1,94 @@
+
+services:
+  app:
+    image: ${DOCKER_IMAGE}
+    container_name: disc-tracker_app
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+
+  db:
+    image: postgres:13
+    container_name: disc-tracker_db
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    volumes: 
+      - pgdata:/var/lib/postgresql/data 
+    networks:
+      - backend
+
+  celery:
+    image: ${DOCKER_IMAGE}
+    container_name: disc-tracker_celery
+    restart: always
+    env_file:
+      - .env
+    command: celery -A disctracker worker --loglevel=info
+    depends_on:
+      - redis
+      - app
+    volumes:
+      - .:/app
+    networks:
+      - backend
+
+  celery_beat:
+    image: ${DOCKER_IMAGE}
+    container_name: disc-tracker_celery_beat
+    restart: always
+    env_file:
+      - .env
+    command: celery -A disctracker beat --loglevel=info -S django
+    depends_on:
+      - redis
+      - app
+    volumes:
+      - .:/app
+    networks:
+      - backend
+
+  redis:
+    container_name: disc-tracker_redis
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: disc-tracker_nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    networks:
+      - frontend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
