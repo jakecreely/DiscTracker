@@ -53,8 +53,8 @@ INSTALLED_APPS = [
     "items.apps.ItemsConfig",
     "crispy_forms",
     "crispy_bootstrap4",
+    "django_celery_beat",
 ]
-
 
 # Crisps Forms
 
