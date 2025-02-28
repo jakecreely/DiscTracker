@@ -10,6 +10,7 @@ services:
       - .env.test
     depends_on:
       - db
+      - redis
     volumes:
       - .:/app
     ports:
@@ -27,6 +28,28 @@ services:
       retries: 5
       start_period: 10s
       timeout: 5s
+
+  redis:
+    container_name: disc-tracker_redis
+    restart: always
+    image: redis:latest
+    ports:
+      - '6379:6379' 
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: disc-tracker_celery
+    restart: always
+    env_file:
+      - .env.test
+    command: celery -A disctracker worker --loglevel=info
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
 
   nginx:
     build:
@@ -49,6 +72,8 @@ services:
     depends_on:
       - app
       - db
+      - redis
+      - celery
       - nginx
     command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest"]
     volumes:
