@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  pull_request: 
+    branches: [ "main" ]
   push:
-    branches: [ "main" ] # Only when code has been merges as it builds and pushes image
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -55,6 +57,7 @@ jobs:
         DATABASE_USER: postgres
         DATABASE_PASSWORD: postgres
         DATABASE_PORT: 5432
+        REDIS_URL: redis://redis:6379/0
       run: |
         coverage run -m pytest ./tests/unit
 
@@ -165,3 +168,4 @@ jobs:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
         POSTGRES_DB: db
+        REDIS_URL: redis://redis:6379/0
