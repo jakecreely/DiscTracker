@@ -50,6 +50,23 @@ services:
       - .env
     command: celery -A disctracker worker --loglevel=info
     depends_on:
+      - db
+      - redis
+      - app
+    volumes:
+      - .:/app
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: disc-tracker_celery_beat
+    restart: always
+    env_file:
+      - .env
+    command: celery -A disctracker beat --loglevel=info -S django
+    depends_on:
+      - db
       - redis
       - app
     volumes:
