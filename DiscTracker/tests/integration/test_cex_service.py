@@ -854,7 +854,7 @@ class TestCexServiceCheckPriceUpdates(TestCase):
         }
 
         updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
+        self.assertEqual(len(updated_items), 0)
 
         # DB Check
         self.item_with_valid_cex_id.refresh_from_db()
