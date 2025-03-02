@@ -13,6 +13,7 @@ services:
     ports:
       - "8000:8000"
     networks:
+      - frontend
       - backend
 
   db:
@@ -85,7 +86,7 @@ services:
       - frontend
 
 volumes:
-  postgres_data:
+  pgdata:
 
 networks:
   backend:
