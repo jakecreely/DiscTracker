@@ -3,16 +3,19 @@ from django.db import DatabaseError
 from django.http import Http404, JsonResponse
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required, user_passes_test
 import logging
 
 from items.models.db_models import Item, PriceHistory
 from items.services import cex
 from items.forms import AddItemForm, UpdateItemPrices
 from items.tasks import update_prices_task
+from items.permissions import is_admin
 
 logger = logging.getLogger(__name__)
 
 
+@login_required
 def index(request):
     if request.method != "GET":
         logger.warning("Invalid request method (%s) - GET required", request.method)
@@ -47,6 +50,7 @@ def index(request):
         return redirect("items:index")
 
 
+@login_required
 def detail(request, item_id):
     if request.method != "GET":
         logger.warning("Invalid request method (%s) - GET required", request.method)
@@ -71,6 +75,7 @@ def detail(request, item_id):
         return redirect("items:index")
 
 
+@login_required
 def price_history(request):
     if request.method != "GET":
         logger.warning("Invalid request method (%s) - GET required", request.method)
@@ -105,6 +110,7 @@ def price_history(request):
         )
 
 
+@login_required
 def add_item_from_cex(request):
     if request.method != "POST":
         logger.warning("Invalid request method (%s) - POST required", request.method)
@@ -159,6 +165,7 @@ def add_item_from_cex(request):
         return redirect("items:index")
 
 
+@user_passes_test(is_admin, login_url="/accounts/login/")
 def update_item_prices(request):
     try:
         messages.info(request, "Price update is in progress. Check back soon!")
@@ -171,6 +178,7 @@ def update_item_prices(request):
         return redirect("items:index")
 
 
+@login_required
 def item_price_chart(request, item_id):
     try:
         item = get_object_or_404(Item, pk=item_id)
