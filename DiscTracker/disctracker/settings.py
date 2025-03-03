@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap4",
     "django_celery_beat",
+    "allauth",
+    "allauth.account",
 ]
 
 # Crisps Forms
@@ -69,6 +71,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "disctracker.urls"
@@ -88,6 +91,21 @@ TEMPLATES = [
         },
     },
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# AllAuth Configuration
+ACCOUNT_EMAIL_REQUIRED = True
+
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 WSGI_APPLICATION = "disctracker.wsgi.application"
 
@@ -175,6 +193,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "auth.User"
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

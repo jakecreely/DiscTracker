@@ -1,0 +1,29 @@
+<script>
+    // Get data from Django
+    var labels = JSON.parse('{{ labels|safe }}');
+    var data = JSON.parse('{{ data|safe }}');
+
+    // Chart.js Config
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',  // Change to 'line', 'pie', etc.
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sales Data',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>

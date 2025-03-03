@@ -3,6 +3,7 @@ import logging
 from datetime import date
 from pydantic import ValidationError
 from django.db import DatabaseError
+from django.core.paginator import Paginator
 
 from items.models.db_models import Item, PriceHistory
 from items.models.pydantic_models import (
@@ -65,8 +66,18 @@ def fetch_item(cex_id):
         return None
 
 
+def fetch_user_items(user, page_number, items_per_page=9):
+    items_list = Item.objects.filter(user=user).order_by("title")
+
+    paginator = Paginator(items_list, items_per_page)
+
+    page_obj = paginator.get_page(page_number)
+
+    return page_obj
+
+
 # Only accepts CEX API Item Response
-def create_or_update_item(item_data):
+def create_or_update_item(item_data, user):
     if item_data is None:
         logger.error("Cex data is None, cannot create item")
         return None
@@ -87,6 +98,7 @@ def create_or_update_item(item_data):
                 "exchange_price": validated_item_data.exchangePrice,
                 "cash_price": validated_item_data.cashPrice,
                 "last_checked": date.today(),
+                "user": user,
             },
         )
 

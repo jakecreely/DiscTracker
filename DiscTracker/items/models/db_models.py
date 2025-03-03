@@ -1,9 +1,13 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.conf import settings
 
 
 class Item(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="items"
+    )
     cex_id = models.CharField(
         max_length=255,
         unique=True,
@@ -38,7 +42,7 @@ class Item(models.Model):
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000"),
         ],
     )
-    last_checked = models.DateField(default=timezone.now().date)
+    last_checked = models.DateField(default=timezone.now)
 
     def __str__(self):
         return self.title
@@ -74,7 +78,7 @@ class PriceHistory(models.Model):
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000"),
         ],
     )
-    date_checked = models.DateField(default=timezone.now().date)
+    date_checked = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f"Price History for {self.item.title} on {self.date_checked}"

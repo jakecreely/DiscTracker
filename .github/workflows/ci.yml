@@ -58,6 +58,12 @@ jobs:
         DATABASE_PASSWORD: postgres
         DATABASE_PORT: 5432
         REDIS_URL: redis://redis:6379/0
+        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+        EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+        EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+        EMAIL_USE_TLS: ${{ secrets.EMAIL_USE_TLS }}
+        DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
       run: |
         coverage run -m pytest ./tests/unit
 
@@ -169,3 +175,9 @@ jobs:
         POSTGRES_PASSWORD: postgres
         POSTGRES_DB: db
         REDIS_URL: redis://redis:6379/0
+        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+        EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+        EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+        EMAIL_USE_TLS: ${{ secrets.EMAIL_USE_TLS }}
+        DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
