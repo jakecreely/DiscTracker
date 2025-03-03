@@ -9,6 +9,7 @@ services:
     depends_on:
       - db
     volumes:
+      - static_volume:/app/staticfiles
       - .:/app
     ports:
       - "8000:8000"
@@ -80,6 +81,8 @@ services:
     restart: always
     ports:
       - "80:80"
+    volumes:
+      - static_volume:/app/staticfiles 
     depends_on:
       - app
     networks:
@@ -87,6 +90,7 @@ services:
 
 volumes:
   pgdata:
+  static_volume:
 
 networks:
   backend:
