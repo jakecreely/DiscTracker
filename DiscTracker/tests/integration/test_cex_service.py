@@ -3,6 +3,7 @@ import requests
 from datetime import date
 from django.test import TestCase
 from django.db import DatabaseError
+from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from items.services import cex
 from items.models.db_models import Item
@@ -153,6 +154,10 @@ class TestCexServiceFetchItem(TestCase):
 
 class TestCexServiceCreateOrUpdateItem(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpass"
+        )
+
         self.existing_item = Item.objects.create(
             cex_id="5060020626449",
             title="Halloween (18) 1978",
@@ -160,6 +165,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             exchange_price=5.0,
             cash_price=3.0,
             last_checked=date(2025, 1, 1),
+            user=self.user,
         )
 
         self.valid_fetched_item_data = {
@@ -171,7 +177,9 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         }
 
     def test_create_item_success(self):
-        created_item = cex.create_or_update_item(self.valid_fetched_item_data)
+        created_item = cex.create_or_update_item(
+            self.valid_fetched_item_data, self.user
+        )
 
         self.assertIsNotNone(created_item)
         self.assertEqual(created_item.cex_id, self.valid_fetched_item_data["boxId"])
@@ -185,6 +193,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         self.assertEqual(
             created_item.cash_price, self.valid_fetched_item_data["cashPrice"]
         )
+        self.assertEqual(created_item.user, self.user)
 
     def test_create_item_invalid_id(self):
         invalid_fetched_item_data = {
@@ -195,7 +204,9 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             "cashPrice": 1.5,
         }
 
-        created_item = cex.create_or_update_item(invalid_fetched_item_data)
+        created_item = cex.create_or_update_item(
+            invalid_fetched_item_data, user=self.user
+        )
 
         self.assertIsNone(created_item)
 
@@ -206,7 +217,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             "cashPrice": 1.5,
         }
 
-        created_item = cex.create_or_update_item(fetched_item_data)
+        created_item = cex.create_or_update_item(fetched_item_data, user=self.user)
 
         self.assertIsNone(created_item)
 
@@ -219,7 +230,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             "cashPrice": 10.0,
         }
 
-        updated_item = cex.create_or_update_item(update_item_data)
+        updated_item = cex.create_or_update_item(update_item_data, user=self.user)
 
         self.assertIsNotNone(updated_item)
         self.assertEqual(
@@ -229,6 +240,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         self.assertEqual(updated_item.sell_price, update_item_data["sellPrice"])
         self.assertEqual(updated_item.exchange_price, update_item_data["exchangePrice"])
         self.assertEqual(updated_item.cash_price, update_item_data["cashPrice"])
+        self.assertEqual(updated_item.user, self.existing_item.user)
 
         # Check DB has updated correctly
         db_item = Item.objects.get(cex_id=self.existing_item.cex_id)
@@ -236,6 +248,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         self.assertEqual(db_item.sell_price, update_item_data["sellPrice"])
         self.assertEqual(db_item.exchange_price, update_item_data["exchangePrice"])
         self.assertEqual(db_item.cash_price, update_item_data["cashPrice"])
+        self.assertEqual(db_item.user, self.existing_item.user)
 
     def test_update_item_invalid_id(self):
         update_item_data = {
@@ -246,7 +259,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             "cashPrice": 10.0,
         }
 
-        updated_item = cex.create_or_update_item(update_item_data)
+        updated_item = cex.create_or_update_item(update_item_data, user=self.user)
 
         self.assertIsNone(updated_item)
 
@@ -256,6 +269,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         self.assertEqual(db_item.sell_price, self.existing_item.sell_price)
         self.assertEqual(db_item.exchange_price, self.existing_item.exchange_price)
         self.assertEqual(db_item.cash_price, self.existing_item.cash_price)
+        self.assertEqual(db_item.user, self.existing_item.user)
 
     def test_update_item_missing_attributes(self):
         update_item_data = {
@@ -266,7 +280,7 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
             # Missing - "cashPrice": 10.0
         }
 
-        updated_item = cex.create_or_update_item(update_item_data)
+        updated_item = cex.create_or_update_item(update_item_data, user=self.user)
 
         self.assertIsNone(updated_item)
 
@@ -276,29 +290,34 @@ class TestCexServiceCreateOrUpdateItem(TestCase):
         self.assertEqual(db_item.sell_price, self.existing_item.sell_price)
         self.assertEqual(db_item.exchange_price, self.existing_item.exchange_price)
         self.assertEqual(db_item.cash_price, self.existing_item.cash_price)
+        self.assertEqual(db_item.user, self.existing_item.user)
 
     def test_create_or_update_item_none_input(self):
-        item = cex.create_or_update_item(None)
+        item = cex.create_or_update_item(None, user=None)
 
         self.assertIsNone(item)
 
     @patch("items.models.db_models.Item.objects.get_or_create")
     def test_create_or_update_item_database_error(self, mock_get_or_create):
         mock_get_or_create.side_effect = DatabaseError
-        item = cex.create_or_update_item(self.valid_fetched_item_data)
+        item = cex.create_or_update_item(self.valid_fetched_item_data, self.user)
 
         self.assertIsNone(item)
 
     @patch("items.models.db_models.Item.objects.get_or_create")
     def test_create_or_update_item_unexpected_error(self, mock_get_or_create):
         mock_get_or_create.side_effect = Exception
-        item = cex.create_or_update_item(self.valid_fetched_item_data)
+        item = cex.create_or_update_item(self.valid_fetched_item_data, self.user)
 
         self.assertIsNone(item)
 
 
 class TestCexServiceCreatePriceHistoryEntry(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpass"
+        )
+
         self.existing_item = Item.objects.create(
             cex_id="5060020626449",
             title="Halloween (18) 1978",
@@ -306,6 +325,7 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
             exchange_price=5.0,
             cash_price=3.0,
             last_checked=date(2025, 1, 1),
+            user=self.user,
         )
 
     def test_create_price_history_entry_success(self):
@@ -347,6 +367,10 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
 
 class TestCexServiceCheckPriceUpdates(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpass"
+        )
+
         self.item_with_valid_cex_id = Item.objects.create(
             cex_id="123456",
             title="Valid Item",
@@ -354,7 +378,9 @@ class TestCexServiceCheckPriceUpdates(TestCase):
             exchange_price=15.0,
             cash_price=10.0,
             last_checked=date(2024, 12, 31),
+            user=self.user,
         )
+
         pass
 
     @patch("items.services.cex.requests.get")
