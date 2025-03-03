@@ -2,7 +2,6 @@ from django.shortcuts import redirect, render, get_object_or_404, get_list_or_40
 from django.db import DatabaseError
 from django.http import Http404, JsonResponse
 from django.contrib import messages
-from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required, user_passes_test
 import logging
 
@@ -24,13 +23,7 @@ def index(request):
 
     try:
         logger.info("Fetching all items for index view")
-        items_list = Item.objects.all().order_by("title")
-
-        NUMBER_OF_ITEMS_PER_PAGE = 9
-        paginator = Paginator(items_list, NUMBER_OF_ITEMS_PER_PAGE)
-
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
+        page_obj = cex.fetch_user_items(request.user, request.GET.get("page"))
 
         context = {
             "items_list": page_obj.object_list,
@@ -59,7 +52,7 @@ def detail(request, item_id):
 
     try:
         logger.info("Fetching item %s for detail view", item_id)
-        item = get_object_or_404(Item, pk=item_id)
+        item = get_object_or_404(Item, pk=item_id, user=request.user)
         return render(request, "items/detail.html", {"item": item})
     except Http404 as e:
         logger.exception("Error fetching item by item_id %s: %s", item_id, e)
@@ -84,7 +77,8 @@ def price_history(request):
 
     try:
         logger.info("Fetching price history for price_history view")
-        price_history = get_list_or_404(PriceHistory)
+        # TODO: Verify this is working
+        price_history = get_list_or_404(PriceHistory, item__user=request.user)
         return render(request, "items/price_history.html", {"item": price_history})
     except Http404 as e:
         logger.exception("Error fetching price history: %s", e)
@@ -135,7 +129,7 @@ def add_item_from_cex(request):
             return redirect("items:index")
 
         logger.info("Creating or updating item in database")
-        item = cex.create_or_update_item(cex_data)
+        item = cex.create_or_update_item(cex_data, request.user)
 
         if not item:
             logger.info("Could not create item with ID %s", cex_id)
@@ -181,7 +175,7 @@ def update_item_prices(request):
 @login_required
 def item_price_chart(request, item_id):
     try:
-        item = get_object_or_404(Item, pk=item_id)
+        item = get_object_or_404(Item, pk=item_id, user=request.user)
         price_history = item.price_history.all().order_by("date_checked")
 
         if not price_history.exists():
