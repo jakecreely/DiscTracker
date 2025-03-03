@@ -9,6 +9,14 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'items:price-history' %}">Price History</a>
             </li>
+            {% if user.is_authenticated %}
+            <p>Welcome, {{ user.username }} | <a href="{% url 'account_logout' %}">Logout</a></p>
+            {% else %}
+            <div>
+                <a href="{% url 'account_signup' %}" class="btn btn-primary">Sign Up</a>
+                <a href="{% url 'account_login' %}" class="btn btn-secondary">Sign In</a>
+            </div>
+        {% endif %}
         </ul>
     </div>
 </nav>

@@ -1,8 +1,9 @@
-{% extends "master.html" %}
+{% extends "allauth/layouts/base.html" %}
 
 {% block title %}Item Details{% endblock %}
 
 {% block content %}
+<div class="container mt-4">
 {% if item %}
 <div class="container mt-4">
     <div class="card shadow-sm mb-4">
@@ -19,4 +20,5 @@
 {% endif %}
 <h2>Item Price History</h2>
 {% include 'items/partials/item_price_chart.html' %}
+</div>
 {% endblock %}

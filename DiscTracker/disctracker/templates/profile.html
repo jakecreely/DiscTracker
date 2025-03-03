@@ -1,0 +1,24 @@
+{% extends "allauth/layouts/manage.html" %}
+{% load allauth %}
+
+{% block head_title %}Profile{% endblock %}
+
+{% block content %}
+    {% element h1 %}Profile{% endelement %}
+    
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Welcome, {{ user.username }}!</h4>
+            <p>Email: {{ user.email }}</p>
+
+            <hr>
+
+            <h5>Account Settings</h5>
+            <ul>
+                <li><a href="{% url 'account_email' %}">Manage Emails</a></li>
+                <li><a href="{% url 'account_change_password' %}">Change Password</a></li>
+                <li><a href="{% url 'account_logout' %}">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
