@@ -2,8 +2,26 @@
 {% load allauth %}
 {% block head_title %}Disc Tracker{% endblock %}
 {% block content %}
-    {% element h1 %}
-        Disc Tracker
-    {% endelement %}
-    <p>Welcome to the Disc Tracker</p>
-{% endblock content %}
+    <div class="container">
+        <h1>Welcome to the Disc Tracker!</h1>
+
+        {% if user.is_authenticated %}
+            <p>Hello, {{ user.username }}!</p>
+        {% else %}
+            <p>
+                Disc Tracker helps you keep track of your discs (such as Blu-rays and games) by fetching the latest prices and sell values from the CeX API. With our easy-to-use web interface, you can:
+            </p>
+            <ul>
+                <li><strong>Track Your Discs:</strong> Store and manage all your discs along with their prices and sell values.</li>
+                <li><strong>Keep a History:</strong> View the price history of your discs to track how their values have evolved over time.</li>
+            </ul>
+            <p>To start using the Disc Tracker, simply log in or sign up.</p>
+            <p>
+                Already have an account? <a href="{% url 'account_login' %}" class="btn btn-primary">Log in</a>
+            </p>
+            <p>
+                New to Disc Tracker? <a href="{% url 'account_signup' %}" class="btn btn-secondary">Sign up</a> and get started today!
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}
