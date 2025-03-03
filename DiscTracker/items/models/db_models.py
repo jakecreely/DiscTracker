@@ -1,9 +1,13 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.conf import settings
 
 
 class Item(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="items"
+    )
     cex_id = models.CharField(
         max_length=255,
         unique=True,
