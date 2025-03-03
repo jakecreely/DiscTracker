@@ -38,7 +38,7 @@ class Item(models.Model):
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000"),
         ],
     )
-    last_checked = models.DateField(default=timezone.now().date)
+    last_checked = models.DateField(default=timezone.now)
 
     def __str__(self):
         return self.title
@@ -74,7 +74,7 @@ class PriceHistory(models.Model):
             MaxValueValidator(3000, "Cash Price must be less than or equal to 3000"),
         ],
     )
-    date_checked = models.DateField(default=timezone.now().date)
+    date_checked = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f"Price History for {self.item.title} on {self.date_checked}"
