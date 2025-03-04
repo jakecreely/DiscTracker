@@ -57,13 +57,13 @@
             </div>
             {% include 'partials/pagination.html' %}
         </div>
-    </div>
-{% else %}
-    <div class="mt-4">
-        <div class="alert alert-warning text-center" role="alert">
-            No items available at the moment. Why not add to your collection?
+    {% else %}
+        <div class="mt-4 col-sm-9">
+            <div class="alert alert-warning text-center" role="alert">
+                No items available at the moment. Why not add to your collection?
+            </div>
         </div>
+    {% endif %}
     </div>
-{% endif %}
 </div>
 {% endblock %}
