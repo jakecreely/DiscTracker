@@ -122,6 +122,43 @@ def create_or_update_item(item_data, user):
         return None
 
 
+def delete_item(item_cex_id, user):
+    if not item_cex_id:
+        logger.error("Item CEX ID not provided: %s", item_cex_id)
+        return False
+
+    try:
+        item = Item.objects.get(cex_id=item_cex_id)
+
+        if not item:
+            logger.error("Item with cex_id %s not found", item_cex_id)
+            return False
+
+        user_item_deleted_count, _ = UserItem.objects.get(user=user, item=item).delete()
+
+        if user_item_deleted_count == 1:
+            logger.info("Removed item %s from user %s", item_cex_id, user.username)
+            return True
+        elif user_item_deleted_count > 1:
+            logger.error(
+                "Deleted more than one UserItem entry for user %s and item %s",
+                user.username,
+                item_cex_id,
+            )
+            return False
+        else:
+            logger.warning(
+                "No UserItem found for user %s and item %s", user.username, item_cex_id
+            )
+            return False
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        return False
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        return False
+
+
 def create_price_history_entry(item):
     if not item:
         logger.error("Item is None, cannot create price history entry")

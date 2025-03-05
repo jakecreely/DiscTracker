@@ -3,10 +3,12 @@
 {% block title %}Item Details{% endblock %}
 
 {% block content %}
+{% load crispy_forms_tags %}
 <div class="container mt-4">
 {% if item %}
 <div class="container mt-4">
     <div class="card shadow-sm mb-4">
+        {% crispy delete_item_form delete_item_form.helper %}
         <div class="card-body">
             <h2 class="card-title">{{ item.title }}</h2>
             <p class="card-text"><strong>Sell Price:</strong>{{ item.sell_price }}</p>
