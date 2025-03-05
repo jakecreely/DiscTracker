@@ -40,11 +40,20 @@ class Command(BaseCommand):
         cex_data = cex.fetch_item(cex_id)
 
         if cex_data:
-            item = cex.create_or_update_item(cex_data, user=user)
+            item, should_create_price_history = cex.create_or_update_item(
+                cex_data, user=user
+            )
             if item:
-                price_history = cex.create_price_history_entry(item)
-                if not price_history:
-                    print(f"Failed to create price history entry for CEX ID: {cex_id}")
+                if should_create_price_history:
+                    price_history = cex.create_price_history_entry(item)
+                    if not price_history:
+                        print(
+                            f"Failed to create price history entry for CEX ID: {cex_id}"
+                        )
+                else:
+                    print(
+                        f"Didn't need to create new price history entry for CEX ID: {cex_id}"
+                    )
             else:
                 print(f"Failed to create item for CEX ID: {cex_id}")
         else:

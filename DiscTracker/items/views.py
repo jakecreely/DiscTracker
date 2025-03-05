@@ -146,24 +146,22 @@ def add_item_from_cex(request):
             return redirect("items:index")
 
         logger.info("Creating or updating item in database")
-        item = cex.create_or_update_item(cex_data, request.user)
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            cex_data, request.user
+        )
 
         if not item:
             logger.info("Could not create item with ID %s", cex_id)
             messages.error(request, f"Could not add Item with ID '{cex_id}'.")
             return redirect("items:index")
 
-        logger.info("Creating price history entry for item %s", cex_id)
-        price_history = cex.create_price_history_entry(item)
-
-        if not price_history:
-            logger.info("Could not create price history entry for item %s", cex_id)
-            messages.error(
-                request, f"Could not create price history for item with ID '{cex_id}'."
+        if not price_history_entry:
+            logger.info(
+                "Could not or didn't need to create price history entry for item %s",
+                cex_id,
             )
-            return redirect("items:index")
 
-        messages.info(request, f"Added/updated {item.title}!")
+        messages.info(request, f"Added {item.title}!")
         logger.info("Redirecting to items index")
         return redirect("items:index")
     except DatabaseError as e:
