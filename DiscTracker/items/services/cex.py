@@ -4,7 +4,7 @@ from datetime import date
 from pydantic import ValidationError
 from django.db import DatabaseError
 
-from items.models.db_models import Item, PriceHistory
+from items.models.db_models import Item, PriceHistory, UserItem
 from items.models.pydantic_models import (
     CexItemApiResponseWrapper,
     CexIdValidator,
@@ -14,6 +14,7 @@ from items.models.pydantic_models import (
 logger = logging.getLogger(__name__)
 
 CEX_API_BASE_URL = "https://wss2.cex.uk.webuy.io/v3/boxes"
+
 
 def fetch_item(cex_id):
     try:
@@ -63,10 +64,12 @@ def fetch_item(cex_id):
         )
         return None
 
-def fetch_user_items(user): 
-    items_list = Item.objects.filter(user=user).order_by("title")
-    
+
+def fetch_user_items(user):
+    items_list = Item.objects.filter(useritem__user=user).order_by("title")
+
     return items_list
+
 
 # Only accepts CEX API Item Response
 def create_or_update_item(item_data, user):
@@ -82,7 +85,7 @@ def create_or_update_item(item_data, user):
         cex_id = validated_item_data.boxId  # TODO: Validate box_id using regex before
 
         logger.info("Creating item in database")
-        item, created = Item.objects.get_or_create(
+        item, item_created = Item.objects.get_or_create(
             cex_id=cex_id,
             defaults={
                 "title": validated_item_data.boxName,
@@ -90,11 +93,12 @@ def create_or_update_item(item_data, user):
                 "exchange_price": validated_item_data.exchangePrice,
                 "cash_price": validated_item_data.cashPrice,
                 "last_checked": date.today(),
-                "user": user,
             },
         )
 
-        if created:
+        UserItem.objects.get_or_create(user=user, item=item)
+
+        if item_created:
             logger.info("Created item %s in database", cex_id)
             return item
         else:
