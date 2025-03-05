@@ -78,6 +78,8 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 
 REDIS_URL=redis://redis:6379/0
+
+USE_SMTP=False
 ```
 
 #### Running The App
