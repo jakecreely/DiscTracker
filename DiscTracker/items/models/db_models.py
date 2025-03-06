@@ -47,11 +47,14 @@ class Item(models.Model):
 
 
 class UserItem(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True
+    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, db_index=True)
 
     class Meta:
         unique_together = ("user", "item")
+        indexes = [models.Index(fields=["user", "item"])]
 
     def __str__(self):
         return f"{self.user.username} owns {self.item.title}"
