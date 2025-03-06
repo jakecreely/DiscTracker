@@ -135,7 +135,7 @@ def create_or_update_item_and_price_history(item_data, user):
             return None, None
 
         latest_price_history = (
-            PriceHistory.objects.filter(item=item).order_by("date_checked").first()
+            PriceHistory.objects.filter(item=item).order_by("-date_checked").first()
         )
 
         should_create_price_history = False
