@@ -103,6 +103,7 @@ USE_SMTP = env.bool("USE_SMTP", default=False)
 
 # AllAuth Configuration
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = True
 
 if USE_SMTP:
     EMAIL_HOST = env("EMAIL_HOST")
