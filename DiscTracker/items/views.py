@@ -8,7 +8,7 @@ import logging
 
 from items.models.db_models import Item, PriceHistory
 from items.services import cex
-from items.forms import AddItemForm, UpdateItemPrices
+from items.forms import AddItemForm, UpdateItemPrices, DeleteItemForm
 from items.tasks import update_prices_task
 from items.permissions import is_admin
 from items.filters import ItemFilter
@@ -55,19 +55,25 @@ def index(request):
 
 
 @login_required
-def detail(request, item_id):
+def detail(request, cex_id):
     if request.method != "GET":
         logger.warning("Invalid request method (%s) - GET required", request.method)
         messages.warning(request, "Invalid request method - only GET is allowed.")
         return redirect("items:index")
 
     try:
-        logger.info("Fetching item %s for detail view", item_id)
-        item = get_object_or_404(Item, pk=item_id, user=request.user)
-        return render(request, "items/detail.html", {"item": item})
+        logger.info("Fetching item %s for detail view", cex_id)
+        item = get_object_or_404(Item, cex_id=cex_id)
+
+        context = {
+            "item": item,
+            "delete_item_form": DeleteItemForm,
+        }
+
+        return render(request, "items/detail.html", context)
     except Http404 as e:
-        logger.exception("Error fetching item by item_id %s: %s", item_id, e)
-        messages.error(request, f"Item with ID '{item_id}' not found.")
+        logger.exception("Error fetching item by item_id %s: %s", cex_id, e)
+        messages.error(request, f"Item with ID '{cex_id}' not found.")
         return redirect("items:index")
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
@@ -88,7 +94,7 @@ def price_history(request):
 
     try:
         logger.info("Fetching price history for price_history view")
-        # TODO: Verify this is working
+        # TODO: Change to use item not user
         price_history = get_list_or_404(PriceHistory, item__user=request.user)
         return render(request, "items/price_history.html", {"item": price_history})
     except Http404 as e:
@@ -140,26 +146,60 @@ def add_item_from_cex(request):
             return redirect("items:index")
 
         logger.info("Creating or updating item in database")
-        item = cex.create_or_update_item(cex_data, request.user)
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            cex_data, request.user
+        )
 
         if not item:
             logger.info("Could not create item with ID %s", cex_id)
             messages.error(request, f"Could not add Item with ID '{cex_id}'.")
             return redirect("items:index")
 
-        logger.info("Creating price history entry for item %s", cex_id)
-        price_history = cex.create_price_history_entry(item)
-
-        if not price_history:
-            logger.info("Could not create price history entry for item %s", cex_id)
-            messages.error(
-                request, f"Could not create price history for item with ID '{cex_id}'."
+        if not price_history_entry:
+            logger.info(
+                "Could not or didn't need to create price history entry for item %s",
+                cex_id,
             )
-            return redirect("items:index")
 
-        messages.info(request, f"Added/updated {item.title}!")
+        messages.info(request, f"Added {item.title}!")
         logger.info("Redirecting to items index")
         return redirect("items:index")
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        messages.error(request, "Database error occurred. Please try again later.")
+        return redirect("items:index")
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        messages.error(request, "An unexpected error occurred. Please try again later.")
+        return redirect("items:index")
+
+
+@login_required
+def delete_item(request, cex_id):
+    if request.method != "POST":
+        logger.warning("Invalid request method (%s) - POST required", request.method)
+        messages.warning(request, "Invalid request method - only POST is allowed.")
+        return redirect("items:index")
+
+    logger.info("Retrieving cex_id from request")
+
+    if not cex_id:
+        logger.warning("cex_id does not exist")
+        messages.warning(request, "Item CEX ID is missing so cannot delete item.")
+        return redirect("items:index")
+
+    try:
+        logger.info("Fetching item by cex_id %s", cex_id)
+        item_deleted = cex.delete_item(cex_id, user=request.user)
+
+        if item_deleted:
+            messages.success(request, "Deleted item successfully!")
+            logger.info("Deleted item with CEX ID %s", cex_id)
+            return redirect("items:index")
+        else:
+            messages.error(request, "Failed to delete item!")
+            logger.error("Failed to delete item with CEX ID %s", cex_id)
+            return redirect("items:index")
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         messages.error(request, "Database error occurred. Please try again later.")
@@ -184,15 +224,15 @@ def update_item_prices(request):
 
 
 @login_required
-def item_price_chart(request, item_id):
+def item_price_chart(request, cex_id):
     try:
-        item = get_object_or_404(Item, pk=item_id, user=request.user)
+        item = get_object_or_404(Item, cex_id=cex_id)
         price_history = item.price_history.all().order_by("date_checked")
 
         if not price_history.exists():
-            logger.warning(f"No price history found for item {item_id}")
+            logger.warning(f"No price history found for item {cex_id}")
             return JsonResponse(
-                {"error": f"No price history available for item {item_id}"}, status=404
+                {"error": f"No price history available for item {cex_id}"}, status=404
             )
 
         labels = []
@@ -241,7 +281,7 @@ def item_price_chart(request, item_id):
         return JsonResponse(data)
 
     except Http404:
-        logger.exception(f"Item with ID {item_id} not found")
+        logger.exception(f"Item with ID {cex_id} not found")
         return JsonResponse({"error": "Item not found."}, status=404)
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)

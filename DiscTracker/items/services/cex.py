@@ -2,7 +2,7 @@ import requests
 import logging
 from datetime import date
 from pydantic import ValidationError
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 
 from items.models.db_models import Item, PriceHistory, UserItem
 from items.models.pydantic_models import (
@@ -120,6 +120,97 @@ def create_or_update_item(item_data, user):
     except Exception as e:
         logger.exception("An unexpected error occured: %s", e)
         return None
+
+
+def create_or_update_item_and_price_history(item_data, user):
+    if item_data is None:
+        logger.error("Item data is None, cannot create item")
+        return None, None
+
+    try:
+        with transaction.atomic():
+            item = create_or_update_item(item_data, user)
+
+            if item is None:
+                logger.error("Failed to create or update item with data: %s", item_data)
+                raise DatabaseError("Item Failed To Be Created")
+
+            latest_price_history = (
+                PriceHistory.objects.filter(item=item).order_by("-date_checked").first()
+            )
+
+            should_create_price_history = False
+
+            if latest_price_history:
+                if (
+                    latest_price_history.sell_price != item.sell_price
+                    or latest_price_history.exchange_price != item.exchange_price
+                    or latest_price_history.cash_price != item.cash_price
+                ):
+                    should_create_price_history = True
+                else:
+                    should_create_price_history = (
+                        False  # No change, just easier to read
+                    )
+            else:
+                should_create_price_history = True
+
+            if should_create_price_history:
+                price_history_entry = create_price_history_entry(item)
+
+                if price_history_entry is None:
+                    logger.error(
+                        "Failed to create price history entry for item with CEX ID: %s",
+                        item.cex_id,
+                    )
+                    raise DatabaseError("Price History Failed To Be Created")
+
+                return item, price_history_entry
+            else:
+                return item, None
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        return None, None
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        return None, None
+
+
+def delete_item(item_cex_id, user):
+    if not item_cex_id:
+        logger.error("Item CEX ID not provided: %s", item_cex_id)
+        return False
+
+    try:
+        item = Item.objects.get(cex_id=item_cex_id)
+
+        if not item:
+            logger.error("Item with cex_id %s not found", item_cex_id)
+            return False
+
+        user_item_deleted_count, _ = UserItem.objects.get(user=user, item=item).delete()
+
+        if user_item_deleted_count == 1:
+            logger.info("Removed item %s from user %s", item_cex_id, user.username)
+            return True
+        elif user_item_deleted_count > 1:
+            logger.error(
+                "Deleted more than one UserItem entry for user %s and item %s",
+                user.username,
+                item_cex_id,
+            )
+            return False
+        else:
+            logger.warning(
+                "No UserItem found for user %s and item %s", user.username, item_cex_id
+            )
+            return False
+    except DatabaseError as e:
+        logger.exception("Database error occured: %s", e)
+        return False
+    except Exception as e:
+        logger.exception("An unexpected error occured: %s", e)
+        return False
 
 
 def create_price_history_entry(item):

@@ -1,4 +1,4 @@
-<div id="chart-container" hx-get="{% url 'items:item-price-chart' item.id %}" hx-trigger="load" hx-target="#chart-container">
+<div id="chart-container" hx-get="{% url 'items:item-price-chart' item.cex_id %}" hx-trigger="load" hx-target="#chart-container">
     <p id="loading-message">Loading chart...</p>
 </div>
 
