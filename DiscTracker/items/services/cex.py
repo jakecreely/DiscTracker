@@ -165,10 +165,6 @@ def create_or_update_item_and_price_history(item_data, user):
             return item, price_history_entry
         else:
             return item, None
-
-    except ValidationError as e:
-        logger.exception("Error validating item data", e)
-        return None, None
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         return None, None
