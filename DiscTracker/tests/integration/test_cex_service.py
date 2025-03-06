@@ -6,7 +6,7 @@ from django.db import DatabaseError
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from items.services import cex
-from items.models.db_models import Item, UserItem
+from items.models.db_models import Item, UserItem, PriceHistory
 
 
 class TestCexServiceFetchItem(TestCase):
@@ -597,6 +597,228 @@ class TestCexServiceCreatePriceHistoryEntry(TestCase):
         price_entry = cex.create_price_history_entry(self.existing_item)
 
         self.assertIsNone(price_entry)
+
+
+class TestCexServiceCreateOrUpdateItemAndPriceHistory(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpass"
+        )
+
+        self.existing_item_fetched_data = {
+            "boxId": "5060020626449",
+            "boxName": "Halloween (18) 1978",
+            "sellPrice": 8.0,
+            "exchangePrice": 5.0,
+            "cashPrice": 3.0,
+        }
+
+        self.existing_item = Item.objects.create(
+            cex_id="5060020626449",
+            title="Halloween (18) 1978",
+            sell_price=8.0,
+            exchange_price=5.0,
+            cash_price=3.0,
+            last_checked=date(2025, 1, 1),
+        )
+
+        self.user_existing_item = UserItem.objects.get_or_create(
+            user=self.user,
+            item=self.existing_item,
+        )
+
+        self.valid_fetched_item_data = {
+            "boxId": "5050582577013",
+            "boxName": "Thing, The (18) 1982",
+            "sellPrice": 6.0,
+            "exchangePrice": 2.0,
+            "cashPrice": 1.5,
+        }
+
+    def test_create_or_update_item_and_price_history_invalid_item_data(self):
+        invalid_item_data = {"invalid": "data"}
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            invalid_item_data, self.user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    def test_create_or_update_item_and_price_history_item_is_none(self):
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            None, self.user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    def test_create_or_update_item_and_price_history_invalid_user(self):
+        invalid_user = "invalid_user"
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, invalid_user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    def test_create_or_update_item_and_price_history_no_price_history(self):
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, self.user
+        )
+
+        self.assertIsNotNone(item)
+        self.assertEqual(item.cex_id, self.valid_fetched_item_data["boxId"])
+        self.assertEqual(item.title, self.valid_fetched_item_data["boxName"])
+        self.assertEqual(item.sell_price, self.valid_fetched_item_data["sellPrice"])
+        self.assertEqual(
+            item.exchange_price, self.valid_fetched_item_data["exchangePrice"]
+        )
+        self.assertEqual(item.cash_price, self.valid_fetched_item_data["cashPrice"])
+
+        self.assertIsNotNone(price_history_entry)
+        self.assertEqual(price_history_entry.item, item)
+        self.assertEqual(
+            price_history_entry.sell_price, self.valid_fetched_item_data["sellPrice"]
+        )
+        self.assertEqual(
+            price_history_entry.exchange_price,
+            self.valid_fetched_item_data["exchangePrice"],
+        )
+        self.assertEqual(
+            price_history_entry.cash_price, self.valid_fetched_item_data["cashPrice"]
+        )
+
+        self.assertEqual(PriceHistory.objects.count(), 1)
+
+    def test_create_or_update_item_and_price_history_existing_price_history_change(
+        self,
+    ):
+        PriceHistory.objects.create(
+            item=self.existing_item,
+            sell_price=1.0,
+            exchange_price=1.0,
+            cash_price=1.0,
+            date_checked=date(2025, 1, 1),
+        )
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.existing_item_fetched_data, self.user
+        )
+
+        self.assertIsNotNone(item)
+        self.assertEqual(item.cex_id, self.existing_item.cex_id)
+        self.assertEqual(item.title, self.existing_item.title)
+        self.assertEqual(item.sell_price, self.existing_item.sell_price)
+        self.assertEqual(item.exchange_price, self.existing_item.exchange_price)
+        self.assertEqual(item.cash_price, self.existing_item.cash_price)
+
+        self.assertIsNotNone(price_history_entry)
+        self.assertEqual(price_history_entry.item, item)
+        self.assertEqual(price_history_entry.sell_price, self.existing_item.sell_price)
+        self.assertEqual(
+            price_history_entry.exchange_price, self.existing_item.exchange_price
+        )
+        self.assertEqual(price_history_entry.cash_price, self.existing_item.cash_price)
+
+        self.assertEqual(PriceHistory.objects.count(), 2)
+
+    def test_create_or_update_item_and_price_history_existing_price_history_no_change(
+        self,
+    ):
+        PriceHistory.objects.create(
+            item=self.existing_item,
+            sell_price=self.existing_item.sell_price,
+            exchange_price=self.existing_item.exchange_price,
+            cash_price=self.existing_item.cash_price,
+            date_checked=date(2025, 1, 1),
+        )
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.existing_item_fetched_data, self.user
+        )
+
+        self.assertIsNotNone(item)
+        self.assertEqual(item.cex_id, self.existing_item.cex_id)
+        self.assertEqual(item.title, self.existing_item.title)
+        self.assertEqual(item.sell_price, self.existing_item.sell_price)
+        self.assertEqual(item.exchange_price, self.existing_item.exchange_price)
+        self.assertEqual(item.cash_price, self.existing_item.cash_price)
+
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 1)
+
+    @patch("items.models.db_models.Item.objects.get_or_create")
+    def test_create_or_update_item_and_price_history_failed_to_create_item(
+        self, mock_get_or_create
+    ):
+        mock_get_or_create.return_value = None
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, self.user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    @patch("items.models.db_models.PriceHistory.objects.create")
+    def test_create_or_update_item_and_price_history_failed_to_create_price_history(
+        self, mock_create
+    ):
+        mock_create.return_value = None
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, self.user
+        )
+
+        self.assertIsNotNone(item)
+        self.assertEqual(item.cex_id, self.valid_fetched_item_data["boxId"])
+        self.assertEqual(item.title, self.valid_fetched_item_data["boxName"])
+        self.assertEqual(item.sell_price, self.valid_fetched_item_data["sellPrice"])
+        self.assertEqual(
+            item.exchange_price, self.valid_fetched_item_data["exchangePrice"]
+        )
+        self.assertEqual(item.cash_price, self.valid_fetched_item_data["cashPrice"])
+
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    @patch("items.services.cex.create_or_update_item")
+    def test_create_or_update_item_and_price_history_database_error(self, mock_call):
+        mock_call.side_effect = DatabaseError
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, self.user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
+
+    @patch("items.services.cex.create_or_update_item")
+    def test_create_or_update_item_and_price_history_unknown_exception(self, mock_call):
+        mock_call.side_effect = Exception
+
+        item, price_history_entry = cex.create_or_update_item_and_price_history(
+            self.valid_fetched_item_data, self.user
+        )
+
+        self.assertIsNone(item)
+        self.assertIsNone(price_history_entry)
+
+        self.assertEqual(PriceHistory.objects.count(), 0)
 
 
 class TestCexServiceCheckPriceUpdates(TestCase):
