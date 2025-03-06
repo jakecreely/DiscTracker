@@ -781,15 +781,7 @@ class TestCexServiceCreateOrUpdateItemAndPriceHistory(TestCase):
             self.valid_fetched_item_data, self.user
         )
 
-        self.assertIsNotNone(item)
-        self.assertEqual(item.cex_id, self.valid_fetched_item_data["boxId"])
-        self.assertEqual(item.title, self.valid_fetched_item_data["boxName"])
-        self.assertEqual(item.sell_price, self.valid_fetched_item_data["sellPrice"])
-        self.assertEqual(
-            item.exchange_price, self.valid_fetched_item_data["exchangePrice"]
-        )
-        self.assertEqual(item.cash_price, self.valid_fetched_item_data["cashPrice"])
-
+        self.assertIsNone(item)
         self.assertIsNone(price_history_entry)
 
         self.assertEqual(PriceHistory.objects.count(), 0)

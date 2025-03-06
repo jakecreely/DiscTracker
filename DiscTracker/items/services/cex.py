@@ -2,7 +2,7 @@ import requests
 import logging
 from datetime import date
 from pydantic import ValidationError
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 
 from items.models.db_models import Item, PriceHistory, UserItem
 from items.models.pydantic_models import (
@@ -128,43 +128,46 @@ def create_or_update_item_and_price_history(item_data, user):
         return None, None
 
     try:
-        item = create_or_update_item(item_data, user)
+        with transaction.atomic():
+            item = create_or_update_item(item_data, user)
 
-        if item is None:
-            logger.error("Failed to create or update item with data: %s", item_data)
-            return None, None
+            if item is None:
+                logger.error("Failed to create or update item with data: %s", item_data)
+                raise DatabaseError("Item Failed To Be Created")
 
-        latest_price_history = (
-            PriceHistory.objects.filter(item=item).order_by("-date_checked").first()
-        )
+            latest_price_history = (
+                PriceHistory.objects.filter(item=item).order_by("-date_checked").first()
+            )
 
-        should_create_price_history = False
+            should_create_price_history = False
 
-        if latest_price_history:
-            if (
-                latest_price_history.sell_price != item.sell_price
-                or latest_price_history.exchange_price != item.exchange_price
-                or latest_price_history.cash_price != item.cash_price
-            ):
-                should_create_price_history = True
+            if latest_price_history:
+                if (
+                    latest_price_history.sell_price != item.sell_price
+                    or latest_price_history.exchange_price != item.exchange_price
+                    or latest_price_history.cash_price != item.cash_price
+                ):
+                    should_create_price_history = True
+                else:
+                    should_create_price_history = (
+                        False  # No change, just easier to read
+                    )
             else:
-                should_create_price_history = False  # No change, just easier to read
-        else:
-            should_create_price_history = True
+                should_create_price_history = True
 
-        if should_create_price_history:
-            price_history_entry = create_price_history_entry(item)
+            if should_create_price_history:
+                price_history_entry = create_price_history_entry(item)
 
-            if price_history_entry is None:
-                logger.error(
-                    "Failed to create price history entry for item with CEX ID: %s",
-                    item.cex_id,
-                )
+                if price_history_entry is None:
+                    logger.error(
+                        "Failed to create price history entry for item with CEX ID: %s",
+                        item.cex_id,
+                    )
+                    raise DatabaseError("Price History Failed To Be Created")
+
+                return item, price_history_entry
+            else:
                 return item, None
-
-            return item, price_history_entry
-        else:
-            return item, None
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         return None, None
