@@ -44,15 +44,16 @@
             </div>
         </form>
     </div>
+    
     {% if items_list %}
-        <div class="container col-sm-9 mt-4">
+        <div class="container col-sm-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="text-center flex-grow-1">Collection</h2>
             </div>
             <div class="row">
                 {% for item in items_list %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card shadow-sm">
+                    <div class="col-12 col-sm-12 col-md-6 col-lg-4 mb-4">
+                        <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title text-truncate">{{ item.title }}</h5>
                                 
@@ -70,7 +71,7 @@
             {% include 'partials/pagination.html' %}
         </div>
     {% else %}
-        <div class="mt-4 col-sm-9">
+        <div class="col-sm-9">
             <div class="alert alert-warning text-center" role="alert">
                 No items available at the moment. Why not add to your collection?
             </div>
