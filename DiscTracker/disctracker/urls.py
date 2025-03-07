@@ -22,6 +22,7 @@ from disctracker import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("faq/", views.faq, name="faq"),
     path("accounts/", include("allauth.urls")),
     path(
         "accounts/profile/",

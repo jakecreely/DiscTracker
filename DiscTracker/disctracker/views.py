@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.views.generic.base import TemplateView
 import logging
 
@@ -14,3 +14,7 @@ def home(request):
     else:
         logger.info("Unauthenticated user accessed home page.")
         return TemplateView.as_view(template_name="index.html")(request)
+
+
+def faq(request):
+    return render(request, "faq.html")

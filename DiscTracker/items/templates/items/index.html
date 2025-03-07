@@ -10,8 +10,13 @@
     {% endfor %}
 {% endif %}
 {% load crispy_forms_tags %}
-<div class="mb-4">
-    {% crispy add_item_form add_item_form.helper %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="card-subtitle mb-2">
+            <a href="{% url 'faq' %}">How to find an item's CEX ID?</a>
+        </div>
+        {% crispy add_item_form add_item_form.helper %}
+    </div>
 </div>
 <div class="row">
     <div class="col-sm-3 mb-4">

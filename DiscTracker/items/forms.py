@@ -11,6 +11,7 @@ class AddItemForm(forms.Form):
         self.helper.form_class = "mainForms"
         self.helper.form_method = "post"
         self.helper.form_action = "add-item"
+        self.helper.form_show_labels = False
         self.helper.layout = Layout(
             Field("cex_id", placeholder="Enter CEX ID..."),
             Submit("submit", "Add Item"),
