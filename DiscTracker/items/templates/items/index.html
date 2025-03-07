@@ -23,16 +23,23 @@
         <form method="GET" action="" class="form">
             <div class="card p-3">
                 <h5 class="mb-3">Filter Collection</h5>
-                
-                {% for field in filter.form %}
-                    <div class="form-group mb-2">
-                        {{ field|as_crispy_field }}
-                    </div>
-                {% endfor %}
-                
-                <div class="d-flex justify-content-between mt-2">
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    <a href="{% url 'items:index' %}" class="btn btn-secondary">Reset</a>
+    
+                <div class="d-block d-sm-none mb-3">
+                    <button class="btn btn-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#filterDropdown" aria-expanded="false" aria-controls="filterDropdown">
+                        Show Filters
+                    </button>
+                </div>
+    
+                <div class="collapse d-sm-block" id="filterDropdown">
+                    {% for field in filter.form %}
+                        <div class="form-group">
+                            {{ field|as_crispy_field }}
+                        </div>
+                    {% endfor %}
+                <div class="d-flex flex-wrap justify-content-between">
+                    <button type="submit" class="btn btn-primary w-100 w-sm-auto mb-2">Apply Filters</button>
+                    <a href="{% url 'items:index' %}" class="btn btn-secondary w-100 w-sm-auto mb-2 mb-sm-0">Reset</a>
+                </div>
                 </div>
             </div>
         </form>
