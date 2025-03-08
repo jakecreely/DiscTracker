@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 import logging
 
-from items.services.api_service import CexService
+from items.services.cex_service import CexService
 from items.services.price_history_service import PriceHistoryService
 from items.services.user_item_service import UserItemService
 from items.validators.item_validator import ItemDataValidator

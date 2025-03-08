@@ -2,7 +2,7 @@ import logging
 
 from django.db import DatabaseError, transaction
 from items.services.price_history_service import PriceHistoryService
-from items.services.api_service import CexService
+from items.services.cex_service import CexService
 from items.services.item_service import ItemService
 
 logger = logging.getLogger(__name__)

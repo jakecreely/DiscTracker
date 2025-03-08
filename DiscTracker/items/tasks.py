@@ -1,7 +1,7 @@
 import logging
 from celery import shared_task
 
-from items.services.api_service import CexService
+from items.services.cex_service import CexService
 from items.services.item_service import ItemService
 from items.services.price_history_service import PriceHistoryService
 from items.services.price_update_service import PriceUpdateService
