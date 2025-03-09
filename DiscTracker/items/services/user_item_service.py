@@ -4,7 +4,7 @@
 # Fetching all relationships
 
 import logging
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, DatabaseError, transaction
 from django.contrib.auth import get_user_model
 from items.models.db_models import Item, UserItem
 
@@ -30,6 +30,9 @@ class UserItemService:
                 f"User {user.username} added item {item.cex_id} to their collection."
             )
             return user_item
+        except DatabaseError as e:
+            logger.exception(f"Database error while adding user to item: {e}")
+            return None
         except IntegrityError as e:
             logger.error(f"IntegrityError while adding user-item relation: {e}")
             return None
@@ -58,6 +61,9 @@ class UserItemService:
                     raise Exception(
                         f"Failed to delete item with cex_id {item.cex_id}, tried to delete {deleted_count} items"
                     )
+        except DatabaseError as e:
+            logger.exception(f"Database error while deleting user from item: {e}")
+            return None
         except IntegrityError as e:
             logger.error(f"IntegrityError while adding user-item relation: {e}")
             return False
@@ -67,7 +73,7 @@ class UserItemService:
             )
             return False
 
-    def validate_user_item_inputs(user, item) -> bool:
+    def _validate_user_item_inputs(self, user, item) -> bool:
         User = get_user_model()
 
         if user is None or item is None:
