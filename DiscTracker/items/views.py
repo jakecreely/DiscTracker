@@ -186,7 +186,7 @@ def add_item_from_cex(request):
 
         if not existing_item:
             logger.info(f"Creating item {item_data.cex_id} in database")
-            item = item_service.create_item_and_price_history(
+            item, _ = item_service.create_item_and_price_history(
                 item_data=item_data, user=request.user
             )
 

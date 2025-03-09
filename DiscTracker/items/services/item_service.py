@@ -95,14 +95,18 @@ class ItemService:
             logger.info(f"Updating item {cex_id}")
             item = Item.objects.get(cex_id=cex_id)
 
-            item.title = (validated_item_data.title,)
-            item.sell_price = (validated_item_data.sell_price,)
-            item.exchange_price = (validated_item_data.exchange_price,)
-            item.cash_price = (validated_item_data.cash_price,)
-            item.last_checked = (date.today(),)
+            item.title = validated_item_data.title
+            item.sell_price = validated_item_data.sell_price
+            item.exchange_price = validated_item_data.exchange_price
+            item.cash_price = validated_item_data.cash_price
+            item.last_checked = date.today()
+            item.save()
 
             logger.info(f"Item {cex_id} updated successfully")
             return item
+        except DatabaseError as e:
+            logger.exception(f"Database error occured: {e}")
+            return None
         except Item.DoesNotExist as e:
             logger.exception(f"Database error occured: {e}")
             return None
@@ -110,7 +114,7 @@ class ItemService:
             logger.exception(f"An unexpected error occured: {e}")
             return None
 
-    def delete_item(cex_id) -> bool:
+    def delete_item(self, cex_id) -> bool:
         if not cex_id:
             logger.error("Item CEX ID not provided")
             return False
@@ -138,7 +142,7 @@ class ItemService:
     def create_item_and_price_history(self, item_data, user):
         if item_data is None:
             logger.error("Item data is None, cannot create item")
-            return None
+            return None, None
 
         try:
             with transaction.atomic():
@@ -166,21 +170,17 @@ class ItemService:
                             item.cex_id,
                         )
                         raise DatabaseError("Price History Failed To Be Created")
-                    return item
+                    return item, price_history_entry
                 else:
                     price_history_entry = self.price_history_service.create_price_history_if_price_changed(
                         item
                     )
                     if price_history_entry is None:
-                        logger.error(
-                            "Failed to create price history entry for item with CEX ID: %s",
-                            item.cex_id,
-                        )
-                        raise DatabaseError("Price History Failed To Be Created")
-                    return item
+                        return item, None
+                    return item, price_history_entry
         except DatabaseError as e:
             logger.exception("Database error occured: %s", e)
-            return None
+            return None, None
         except Exception as e:
             logger.exception("An unexpected error occured: %s", e)
-            return None
+            return None, None
