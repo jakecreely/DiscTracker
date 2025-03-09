@@ -42,7 +42,7 @@ class UserItemService:
             )
             return None
 
-    def delete_user_item(self, user, item) -> bool:
+    def delete_user_item(self, user, item):
         if not self.user_owns_item(user, item):
             logger.info(f"User {user.username} doesn't own item {item.cex_id}")
             return False
@@ -63,7 +63,7 @@ class UserItemService:
                     )
         except DatabaseError as e:
             logger.exception(f"Database error while deleting user from item: {e}")
-            return None
+            return False
         except IntegrityError as e:
             logger.error(f"IntegrityError while adding user-item relation: {e}")
             return False

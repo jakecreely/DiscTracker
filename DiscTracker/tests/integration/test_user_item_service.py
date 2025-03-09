@@ -78,7 +78,7 @@ def test_delete_user_item_not_owned(user_item_service, user, item):
 
 
 @pytest.mark.django_db
-@patch("items.models.db_models.UserItem.objects.filter")
-def test_delete_user_item_database_error(mock_filter, user_item_service, user, item):
-    mock_filter.side_effect = DatabaseError
+@patch("items.models.db_models.UserItem.delete")
+def test_delete_user_item_database_error(mock_delete, user_item_service, user, item):
+    mock_delete.side_effect = DatabaseError
     assert user_item_service.delete_user_item(user, item) is False
