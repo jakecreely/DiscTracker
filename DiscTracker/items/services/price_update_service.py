@@ -56,13 +56,13 @@ class PriceUpdateService:
                             updated_item = self.item_service.update_item(
                                 fetched_item_data
                             )
-                            if not item:
+                            if not updated_item:
                                 raise DatabaseError(
                                     f"Failed to update item for CEX ID {item.cex_id}"
                                 )
                             price_history_entry = (
                                 self.price_history_service.create_price_history_entry(
-                                    item, updated_item
+                                    updated_item
                                 )
                             )
                             if not price_history_entry:
@@ -92,9 +92,9 @@ class PriceUpdateService:
             return None
 
     def _validate_price_data(self, fetched_item_data):
-        sell_price = fetched_item_data.sellPrice
-        cash_price = fetched_item_data.cashPrice
-        exchange_price = fetched_item_data.exchangePrice
+        sell_price = fetched_item_data.sell_price
+        cash_price = fetched_item_data.cash_price
+        exchange_price = fetched_item_data.exchange_price
 
         price_data_not_none = (
             sell_price is not None

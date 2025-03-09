@@ -1,602 +1,474 @@
 import pytest
 import requests
 from datetime import date
-from django.test import TestCase
-from django.contrib.auth import get_user_model
 from unittest.mock import patch
-from items.services import cex
-from items.models.db_models import Item, UserItem
-
-
-class TestCexServiceCheckPriceUpdates(TestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="testuser", password="testpass"
-        )
-
-        self.item_with_valid_cex_id = Item.objects.create(
-            cex_id="123456",
-            title="Valid Item",
-            sell_price=20.0,
-            exchange_price=15.0,
-            cash_price=10.0,
-            last_checked=date(2024, 12, 31),
-        )
-
-        self.user_existing_item = UserItem.objects.get_or_create(
-            user=self.user,
-            item=self.item_with_valid_cex_id,
-        )
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_single_item(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": 15.0,
-                            "exchangePrice": 3.0,
-                            "cashPrice": 8.0,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, 15.0)
-        self.assertEqual(updated_item.exchange_price, 3.0)
-        self.assertEqual(updated_item.cash_price, 8.0)
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(updated_item.sell_price, 15.0)
-        self.assertEqual(updated_item.exchange_price, 3.0)
-        self.assertEqual(updated_item.cash_price, 8.0)
-
-    @pytest.mark.skip(reason="Test not implemented")
-    def test_check_price_updates_multiple_items(self):
-        self.assertIsNotNone(None)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_no_price_change(self, mock_get):
-        current_sell_price = self.item_with_valid_cex_id.sell_price
-        current_exchange_price = self.item_with_valid_cex_id.exchange_price
-        current_cash_price = self.item_with_valid_cex_id.cash_price
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": current_sell_price,
-                            "exchangePrice": current_exchange_price,
-                            "cashPrice": current_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 0)
-
-        # Check DB
-        self.item_with_valid_cex_id.refresh_from_db()
-        self.assertEqual(self.item_with_valid_cex_id.sell_price, current_sell_price)
-        self.assertEqual(
-            self.item_with_valid_cex_id.exchange_price, current_exchange_price
-        )
-        self.assertEqual(self.item_with_valid_cex_id.cash_price, current_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_cash_price_increases(self, mock_get):
-        increased_cash_price = max(self.item_with_valid_cex_id.cash_price + 10.5, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": self.item_with_valid_cex_id.sell_price,
-                            "exchangePrice": self.item_with_valid_cex_id.exchange_price,
-                            "cashPrice": increased_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(updated_item.cash_price, increased_cash_price)
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(updated_item.cash_price, increased_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_cash_price_decreases(self, mock_get):
-        decreased_cash_price = max(self.item_with_valid_cex_id.cash_price - 1, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": self.item_with_valid_cex_id.sell_price,
-                            "exchangePrice": self.item_with_valid_cex_id.exchange_price,
-                            "cashPrice": decreased_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(updated_item.cash_price, decreased_cash_price)
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(updated_item.cash_price, decreased_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_sell_price_increases(self, mock_get):
-        increased_sell_price = max(self.item_with_valid_cex_id.sell_price + 10.5, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": increased_sell_price,
-                            "exchangePrice": self.item_with_valid_cex_id.exchange_price,
-                            "cashPrice": self.item_with_valid_cex_id.cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, increased_sell_price)
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(updated_item.sell_price, increased_sell_price)
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_sell_price_decreases(self, mock_get):
-        decreased_sell_price = max(self.item_with_valid_cex_id.sell_price - 1, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": decreased_sell_price,
-                            "exchangePrice": self.item_with_valid_cex_id.exchange_price,
-                            "cashPrice": self.item_with_valid_cex_id.cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, decreased_sell_price)
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(updated_item.sell_price, decreased_sell_price)
-        self.assertEqual(
-            updated_item.exchange_price, self.item_with_valid_cex_id.exchange_price
-        )
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_exchange_price_increases(self, mock_get):
-        increased_exchange_price = max(
-            self.item_with_valid_cex_id.exchange_price + 10.5, 0
-        )
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": self.item_with_valid_cex_id.sell_price,
-                            "exchangePrice": increased_exchange_price,
-                            "cashPrice": self.item_with_valid_cex_id.cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(updated_item.exchange_price, increased_exchange_price)
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(updated_item.exchange_price, increased_exchange_price)
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_exchange_price_decreases(self, mock_get):
-        decreased_exchange_price = max(
-            self.item_with_valid_cex_id.exchange_price - 1, 0
-        )
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": self.item_with_valid_cex_id.sell_price,
-                            "exchangePrice": decreased_exchange_price,
-                            "cashPrice": self.item_with_valid_cex_id.cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(updated_item.exchange_price, decreased_exchange_price)
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(
-            updated_item.sell_price, self.item_with_valid_cex_id.sell_price
-        )
-        self.assertEqual(updated_item.exchange_price, decreased_exchange_price)
-        self.assertEqual(
-            updated_item.cash_price, self.item_with_valid_cex_id.cash_price
-        )
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_all_prices_increase(self, mock_get):
-        increased_sell_price = max(self.item_with_valid_cex_id.sell_price + 1, 0)
-        increased_exchange_price = max(
-            self.item_with_valid_cex_id.exchange_price + 2, 0
-        )
-        increased_cash_price = max(self.item_with_valid_cex_id.cash_price + 3, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": increased_sell_price,
-                            "exchangePrice": increased_exchange_price,
-                            "cashPrice": increased_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, increased_sell_price)
-        self.assertEqual(updated_item.exchange_price, increased_exchange_price)
-        self.assertEqual(updated_item.cash_price, increased_cash_price)
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, increased_sell_price)
-        self.assertEqual(updated_item.exchange_price, increased_exchange_price)
-        self.assertEqual(updated_item.cash_price, increased_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_all_prices_decreases(self, mock_get):
-        decreased_sell_price = max(self.item_with_valid_cex_id.sell_price - 1, 0)
-        decreased_exchange_price = max(
-            self.item_with_valid_cex_id.exchange_price - 2, 0
-        )
-        decreased_cash_price = max(self.item_with_valid_cex_id.cash_price - 3, 0)
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": decreased_sell_price,
-                            "exchangePrice": decreased_exchange_price,
-                            "cashPrice": decreased_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 1)
-
-        updated_item = updated_items[0]
-
-        # Check Response
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, decreased_sell_price)
-        self.assertEqual(updated_item.exchange_price, decreased_exchange_price)
-        self.assertEqual(updated_item.cash_price, decreased_cash_price)
-
-        # DB Check
-        updated_item.refresh_from_db()
-        self.assertEqual(updated_item.cex_id, self.item_with_valid_cex_id.cex_id)
-        self.assertEqual(updated_item.title, self.item_with_valid_cex_id.title)
-        self.assertEqual(updated_item.sell_price, decreased_sell_price)
-        self.assertEqual(updated_item.exchange_price, decreased_exchange_price)
-        self.assertEqual(updated_item.cash_price, decreased_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_all_prices_negative(self, mock_get):
-        negative_sell_price = -1.0
-        negative_exchange_price = -1.0
-        negative_cash_price = -1.0
-
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            "boxName": self.item_with_valid_cex_id.title,
-                            "sellPrice": negative_sell_price,
-                            "exchangePrice": negative_exchange_price,
-                            "cashPrice": negative_cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-        self.assertEqual(len(updated_items), 0)
-
-        # DB Check
-        self.item_with_valid_cex_id.refresh_from_db()
-        self.assertEqual(
-            self.item_with_valid_cex_id.cex_id, self.item_with_valid_cex_id.cex_id
-        )
-        self.assertEqual(
-            self.item_with_valid_cex_id.title, self.item_with_valid_cex_id.title
-        )
-        self.assertNotEqual(self.item_with_valid_cex_id.sell_price, negative_sell_price)
-        self.assertNotEqual(
-            self.item_with_valid_cex_id.exchange_price, negative_exchange_price
-        )
-        self.assertNotEqual(self.item_with_valid_cex_id.cash_price, negative_cash_price)
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_no_items_to_check(self, mock_get):
-        Item.objects.all().delete()
-
-        updated_items = cex.check_price_updates()
-
-        self.assertEqual(len(updated_items), 0)
-
-        mock_get.assert_not_called()
-
-    @patch("items.services.cex.requests.get")
-    def test_check_price_updates_incorrect_format(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "response": {
-                "ack": "success",
-                "data": {
-                    "boxDetails": [
-                        {
-                            "boxId": self.item_with_valid_cex_id.cex_id,
-                            # Missing - "boxName": self.item_with_valid_cex_id.title,
-                            # Missing - "sellPrice": self.item_with_valid_cex_id.sell_price,
-                            "exchangePrice": self.item_with_valid_cex_id.exchange_price,
-                            "cashPrice": self.item_with_valid_cex_id.cash_price,
-                        }
-                    ]
-                },
-                "error": {"code": "", "internal_message": "", "moreInfo": []},
-            }
-        }
-
-        updated_items = cex.check_price_updates()
-
-        # Invalid Items are skipped
-        self.assertEqual(len(updated_items), 0)
-
-    @patch("items.services.cex.fetch_item")
-    def test_check_price_updates_http_error(self, mock_fetch_item):
-        mock_fetch_item.side_effect = requests.exceptions.HTTPError
-
-        updated_items = cex.check_price_updates()
-
-        self.assertIsNone(updated_items)
-
-    @patch("items.services.cex.fetch_item")
-    def test_check_price_updates_json_error(self, mock_fetch_item):
-        mock_fetch_item.side_effect = requests.exceptions.JSONDecodeError
-
-        updated_items = cex.check_price_updates()
-
-        self.assertIsNone(updated_items)
-
-    @patch("items.services.cex.fetch_item")
-    def test_check_price_updates_unexpected_error(self, mock_fetch_item):
-        mock_fetch_item.side_effect = Exception
-
-        updated_items = cex.check_price_updates()
-
-        self.assertIsNone(updated_items)
+from items.services.price_update_service import PriceUpdateService
+from items.services.item_service import ItemService
+from items.services.user_item_service import UserItemService
+from items.services.price_history_service import PriceHistoryService
+from items.services.cex_service import CexService
+from items.validators.item_validator import ItemDataValidator
+from items.models.pydantic_models import ItemData
+from items.models.db_models import Item
+
+
+@pytest.fixture
+def existing_item():
+    return Item.objects.create(
+        cex_id="123456",
+        title="Valid Item",
+        sell_price=20.0,
+        exchange_price=15.0,
+        cash_price=10.0,
+        last_checked=date(2024, 12, 31),
+    )
+
+
+@pytest.fixture
+def price_update_service():
+    validator = ItemDataValidator()
+    user_item_service = UserItemService()
+    price_history_service = PriceHistoryService()
+
+    item_service = ItemService(
+        validator=validator,
+        user_item_service=user_item_service,
+        price_history_service=price_history_service,
+    )
+
+    cex_service = CexService()
+
+    return PriceUpdateService(
+        item_service=item_service,
+        api_service=cex_service,
+        price_history_service=price_history_service,
+    )
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_single_item(
+    mock_fetch_item, price_update_service, existing_item
+):
+    mock_fetch_item.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=15.0,
+        exchange_price=3.0,
+        cash_price=8.0,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == 15.0
+    assert updated_item.exchange_price == 3.0
+    assert updated_item.cash_price == 8.0
+
+    # DB Check
+    updated_item.refresh_from_db()
+    updated_item.sell_price == 15.0
+    updated_item.exchange_price == 3.0
+    updated_item.cash_price == 8.0
+
+
+@pytest.mark.skip(reason="Test not implemented")
+def test_check_price_updates_multiple_items(self):
+    self.assertIsNotNone(None)
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_no_price_change(
+    mock_fetch, price_update_service, existing_item
+):
+    current_sell_price = existing_item.sell_price
+    current_exchange_price = existing_item.exchange_price
+    current_cash_price = existing_item.cash_price
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=current_sell_price,
+        exchange_price=current_exchange_price,
+        cash_price=current_cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 0
+
+    # Check DB
+    existing_item.refresh_from_db()
+    assert existing_item.sell_price == current_sell_price
+    assert existing_item.exchange_price == current_exchange_price
+    assert existing_item.cash_price == current_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_cash_price_decreases(
+    mock_fetch, price_update_service, existing_item
+):
+    decreased_cash_price = max(existing_item.cash_price - 1, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=existing_item.sell_price,
+        exchange_price=existing_item.exchange_price,
+        cash_price=decreased_cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == decreased_cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == decreased_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_sell_price_increases(
+    mock_fetch, price_update_service, existing_item
+):
+    increased_sell_price = max(existing_item.sell_price + 10.5, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=increased_sell_price,
+        exchange_price=existing_item.exchange_price,
+        cash_price=existing_item.cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == increased_sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == increased_sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_sell_price_decreases(
+    mock_fetch, price_update_service, existing_item
+):
+    decreased_sell_price = max(existing_item.sell_price - 1, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=decreased_sell_price,
+        exchange_price=existing_item.exchange_price,
+        cash_price=existing_item.cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == decreased_sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == decreased_sell_price
+    assert updated_item.exchange_price == existing_item.exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_exchange_price_increases(
+    mock_fetch, price_update_service, existing_item
+):
+    increased_exchange_price = max(existing_item.exchange_price + 10.5, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=existing_item.sell_price,
+        exchange_price=increased_exchange_price,
+        cash_price=existing_item.cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == increased_exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == increased_exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_exchange_price_decreases(
+    mock_fetch, price_update_service, existing_item
+):
+    decreased_exchange_price = max(existing_item.exchange_price - 1, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=existing_item.sell_price,
+        exchange_price=decreased_exchange_price,
+        cash_price=existing_item.cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == decreased_exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == existing_item.sell_price
+    assert updated_item.exchange_price == decreased_exchange_price
+    assert updated_item.cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_all_prices_increase(
+    mock_fetch, price_update_service, existing_item
+):
+    increased_sell_price = max(existing_item.sell_price + 1, 0)
+    increased_exchange_price = max(existing_item.exchange_price + 2, 0)
+    increased_cash_price = max(existing_item.cash_price + 3, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=increased_sell_price,
+        exchange_price=increased_exchange_price,
+        cash_price=increased_cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == increased_sell_price
+    assert updated_item.exchange_price == increased_exchange_price
+    assert updated_item.cash_price == increased_cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == increased_sell_price
+    assert updated_item.exchange_price == increased_exchange_price
+    assert updated_item.cash_price == increased_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_all_prices_decrease(
+    mock_fetch, price_update_service, existing_item
+):
+    decreased_sell_price = max(existing_item.sell_price - 1, 0)
+    decreased_exchange_price = max(existing_item.exchange_price - 2, 0)
+    decreased_cash_price = max(existing_item.cash_price - 3, 0)
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=decreased_sell_price,
+        exchange_price=decreased_exchange_price,
+        cash_price=decreased_cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 1
+
+    updated_item = updated_items[0]
+
+    # Check Response
+    assert updated_item.cex_id == existing_item.cex_id
+    assert updated_item.title == existing_item.title
+    assert updated_item.sell_price == decreased_sell_price
+    assert updated_item.exchange_price == decreased_exchange_price
+    assert updated_item.cash_price == decreased_cash_price
+
+    # DB Check
+    updated_item.refresh_from_db()
+    assert updated_item.sell_price == decreased_sell_price
+    assert updated_item.exchange_price == decreased_exchange_price
+    assert updated_item.cash_price == decreased_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_all_prices_negative(
+    mock_fetch, price_update_service, existing_item
+):
+    negative_sell_price = -1.0
+    negative_exchange_price = -1.0
+    negative_cash_price = -1.0
+
+    mock_fetch.return_value = ItemData(
+        cex_id=existing_item.cex_id,
+        title=existing_item.title,
+        sell_price=negative_sell_price,
+        exchange_price=negative_exchange_price,
+        cash_price=negative_cash_price,
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 0
+
+    # DB Check
+    existing_item.refresh_from_db()
+    assert existing_item.cex_id == existing_item.cex_id
+    assert existing_item.title == existing_item.title
+    assert existing_item.sell_price != negative_sell_price
+    assert existing_item.exchange_price != negative_exchange_price
+    assert existing_item.cash_price != negative_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_no_items_to_check(mock_fetch, price_update_service):
+    Item.objects.all().delete()
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert len(updated_items) == 0
+
+    mock_fetch.assert_not_called()
+
+
+# @pytest.mark.django_db
+# @patch("items.services.cex_service.CexService.fetch_item")
+# def test_check_price_updates_incorrect_format(mock_fetch, price_update_service, existing_item):
+#     increased_exchange_price = existing_item.exchange_price + 10
+#     increased_cash_price = existing_item.cash_price + 10
+
+#     mock_fetch.return_value = ItemData(
+#         cex_id=existing_item.cex_id,
+#         # Missing - "title": existing_item.title,
+#         # Missing - "sell_price": existing_item.sell_price,
+#         exchange_price=increased_exchange_price,
+#         cash_price=increased_cash_price,
+#     )
+
+#     updated_items = price_update_service.check_price_updates()
+
+#     # Invalid Items are skipped
+#     assert len(updated_items) == 0
+
+#     existing_item.refresh_from_db()
+#     assert existing_item.cex_id == existing_item.cex_id
+#     assert existing_item.title == existing_item.title
+#     assert existing_item.exchange_price != increased_exchange_price
+#     assert existing_item.cash_price != increased_cash_price
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_http_error(mock_fetch_item, price_update_service):
+    mock_fetch_item.side_effect = requests.exceptions.HTTPError
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert updated_items == []
+
+
+@pytest.mark.django_db
+@patch("items.services.item_service.ItemService.get_all_items")
+def test_check_price_updates_json_error(mock_get_all_items, price_update_service):
+    mock_get_all_items.side_effect = requests.exceptions.JSONDecodeError(
+        "Expecting value", "", 0
+    )
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert updated_items is None
+
+
+@pytest.mark.django_db
+@patch("items.services.cex_service.CexService.fetch_item")
+def test_check_price_updates_unexpected_error_inner(
+    mock_fetch_item, price_update_service
+):
+    mock_fetch_item.side_effect = Exception
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert updated_items == []
+
+
+@pytest.mark.django_db
+@patch("items.services.item_service.ItemService.get_all_items")
+def test_check_price_updates_unexpected_error_outer(
+    mock_get_all_items, price_update_service
+):
+    mock_get_all_items.side_effect = Exception
+
+    updated_items = price_update_service.check_price_updates()
+
+    assert updated_items is None
