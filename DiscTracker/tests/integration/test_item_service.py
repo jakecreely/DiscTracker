@@ -1,6 +1,5 @@
 from datetime import date
 from django.db import DatabaseError
-from django.contrib.auth import get_user_model
 from unittest.mock import patch
 
 import pytest
@@ -8,7 +7,7 @@ from items.services.item_service import ItemService
 from items.services.user_item_service import UserItemService
 from items.services.price_history_service import PriceHistoryService
 from items.validators.item_validator import ItemDataValidator
-from items.models.db_models import Item, UserItem, PriceHistory
+from items.models.db_models import Item, PriceHistory
 
 
 @pytest.fixture
@@ -22,13 +21,6 @@ def item_service():
         validator=validator,
         user_item_service=user_item_service,
         price_history_service=price_history_service,
-    )
-
-
-@pytest.fixture
-def user():
-    return get_user_model().objects.create_user(
-        username="testuser", password="testpass"
     )
 
 
@@ -52,14 +44,6 @@ def existing_item():
         exchange_price=5.0,
         cash_price=3.0,
         last_checked=date(2025, 1, 1),
-    )
-
-
-@pytest.fixture
-def user_existing_item(user, existing_item):
-    return UserItem.objects.create(
-        user=user,
-        item=existing_item,
     )
 
 
