@@ -1,6 +1,7 @@
 from datetime import date
 from django.db import DatabaseError
 from unittest.mock import patch
+from django.contrib.auth import get_user_model
 
 import pytest
 from items.services.item_service import ItemService
@@ -11,7 +12,13 @@ from items.models.db_models import Item, PriceHistory
 
 
 @pytest.fixture
-@pytest.mark.django_db
+def user():
+    return get_user_model().objects.create_user(
+        username="testuser", password="testpass"
+    )
+
+
+@pytest.fixture
 def item_service():
     validator = ItemDataValidator()
     user_item_service = UserItemService()
@@ -97,7 +104,7 @@ def test_create_item_success(item_service, valid_fetched_item_data):
 
 
 @pytest.mark.django_db
-def test_create_item_missing_attributes(item_service, user):
+def test_create_item_missing_attributes(item_service):
     fetched_item_data = {
         "cex_id": "5050582577013",
         "exchange_price": 2.0,
