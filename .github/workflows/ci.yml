@@ -186,4 +186,4 @@ jobs:
 
     - name: Run Integration Tests
       run: |
-        docker-compose exec app /bin/sh -c "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration"
+        docker compose exec app /bin/sh -c "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration"
