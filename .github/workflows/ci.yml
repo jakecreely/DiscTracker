@@ -159,9 +159,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run Integration Tests
+    - name: Build and run docker compose
       run: |
-        docker compose -f docker-compose.ci.yml up --abort-on-container-exit
+        docker compose -f docker-compose.ci.yml up -d --build
       env:
         DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/disc-tracker:${{ github.sha }}
         DEBUG: ${{ secrets.DEBUG }}
@@ -181,3 +181,9 @@ jobs:
         EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
         EMAIL_USE_TLS: ${{ secrets.EMAIL_USE_TLS }}
         DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+
+  #   command: ["/bin/sh", "-c", "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration"]
+
+    - name: Run Integration Tests
+      run: |
+        docker-compose exec app /bin/sh -c "/app/scripts/wait-for-it.sh db:5432 -- && pytest /app/tests/integration"
