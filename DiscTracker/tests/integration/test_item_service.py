@@ -8,7 +8,7 @@ from items.services.item_service import ItemService
 from items.services.user_item_service import UserItemService
 from items.services.price_history_service import PriceHistoryService
 from items.validators.item_validator import ItemDataValidator
-from items.models.db_models import Item, PriceHistory
+from items.models.db_models import Item, UserItem, PriceHistory
 
 
 @pytest.fixture
@@ -63,6 +63,58 @@ def valid_fetched_item_data():
         "exchange_price": 2.0,
         "cash_price": 1.5,
     }
+
+
+def test_get_item_by_cex_id_success(item_service, existing_item):
+    item = item_service.get_item_by_cex_id(existing_item.cex_id)
+
+    assert item is not None
+    assert item.cex_id == existing_item.cex_id
+    assert item.title == existing_item.title
+    assert item.sell_price == existing_item.sell_price
+    assert item.exchange_price == existing_item.exchange_price
+    assert item.cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+def test_get_item_by_cex_id_not_found(item_service):
+    item = item_service.get_item_by_cex_id("nonexistent_cex_id")
+
+    assert item is None
+
+
+@pytest.mark.django_db
+def test_get_all_items(item_service, existing_item):
+    items = item_service.get_all_items()
+
+    assert items.count() == 1
+    assert items[0].cex_id == existing_item.cex_id
+    assert items[0].title == existing_item.title
+    assert items[0].sell_price == existing_item.sell_price
+    assert items[0].exchange_price == existing_item.exchange_price
+    assert items[0].cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+def test_get_user_items(item_service, user, existing_item):
+    UserItem.objects.create(user=user, item=existing_item)
+
+    user_items = item_service.get_user_items(user)
+
+    assert user_items.count() == 1
+    assert user_items[0].cex_id == existing_item.cex_id
+    assert user_items[0].title == existing_item.title
+    assert user_items[0].sell_price == existing_item.sell_price
+    assert user_items[0].exchange_price == existing_item.exchange_price
+    assert user_items[0].cash_price == existing_item.cash_price
+
+
+@pytest.mark.django_db
+def test_get_user_items_invalid_user(item_service):
+    invalid_user = "invalid_user"
+
+    with pytest.raises(ValueError):
+        item_service.get_user_items(invalid_user)
 
 
 @pytest.mark.django_db
