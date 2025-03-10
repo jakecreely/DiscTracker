@@ -21,7 +21,6 @@ services:
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
     depends_on:
       - db
-      - nginx
     volumes:
       - .:/app
     ports:
