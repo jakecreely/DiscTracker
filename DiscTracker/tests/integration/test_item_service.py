@@ -65,6 +65,7 @@ def valid_fetched_item_data():
     }
 
 
+@pytest.mark.django_db
 def test_get_item_by_cex_id_success(item_service, existing_item):
     item = item_service.get_item_by_cex_id(existing_item.cex_id)
 
