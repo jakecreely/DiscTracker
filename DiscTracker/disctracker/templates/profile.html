@@ -4,24 +4,65 @@
 {% block head_title %}Profile{% endblock %}
 
 {% block content %}
-    {% element h1 %}Profile{% endelement %}
-    
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Welcome, {{ user.username }}!</h4>
+    <div class="container"> 
+        <h1 class="d-none d-sm-block">Profile</h1>
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Welcome, {{ user.username }}!</h4>
 
-            <hr>
+                <hr>
 
-            <p>Email: {{ user.email }}</p>
+                <p>Email: {{ user.email }}</p>
 
-            <hr>
+                <hr>
 
-            <h5>Account Settings</h5>
-            <ul>
-                <li><a href="{% url 'account_email' %}">Manage Emails</a></li>
-                <li><a href="{% url 'account_change_password' %}">Change Password</a></li>
-                <li><a href="{% url 'account_logout' %}">Logout</a></li>
-            </ul>
-        </div>
+                <h5>Account Settings</h5>
+                <ul>
+                    {% url 'account_email' as email_url_ %}
+                    {% if email_url_ %}
+                        <li class="nav-item">
+                            <a 
+                            href="{{ email_url_ }}">Manage Emails</a>
+                        </li>
+                    {% endif %}
+                    {% url 'account_change_password' as change_password_url_ %}
+                    {% if change_password_url_ %}
+                        <li class="nav-item">
+                            <a
+                                href="{{ change_password_url_ }}">Change Password</a>
+                        </li>
+                    {% endif %}
+                    {% url 'account_change_phone' as phone_url_ %}
+                    {% if phone_url_ %}
+                        <li class="nav-item">
+                            <a
+                            href="{{ phone_url_ }}">Change Phone</a>
+                        </li>
+                    {% endif %}
+                    {% url 'socialaccount_connections' as connections_url_ %}
+                    {% if connections_url_ %}
+                        <li class="nav-item">
+                            <a 
+                            href="{{ connections_url_ }}">Third-Party Accounts</a>
+                        </li>
+                    {% endif %}
+                    {% url 'mfa_index' as mfa_index_url_ %}
+                    {% if mfa_index_url_ %}
+                        <li class="nav-item">
+                            <a
+                            href="{{ mfa_index_url_ }}">Two-Factor Authentication</a>
+                        </li>
+                    {% endif %}
+                    {% url 'usersessions_list' as usersessions_list_url_ %}
+                    {% if usersessions_list_url_ %}
+                        <li class="nav-item">
+                            <a 
+                            href="{{ usersessions_list_url_ }}">Sessions</a>
+                        </li>
+                    {% endif %}
+                    <li><a href="{% url 'account_logout' %}">Logout</a></li>
+                </ul>
+            </div>
+    </div>
     </div>
 {% endblock %}

@@ -6,8 +6,12 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 import logging
 
+from items.services.cex_service import CexService
+from items.services.price_history_service import PriceHistoryService
+from items.services.user_item_service import UserItemService
+from items.validators.item_validator import ItemDataValidator
+from items.services.item_service import ItemService
 from items.models.db_models import Item, PriceHistory
-from items.services import cex
 from items.forms import AddItemForm, UpdateItemPrices, DeleteItemForm
 from items.tasks import update_prices_task
 from items.permissions import is_admin
@@ -24,8 +28,18 @@ def index(request):
         return redirect("items:index")
 
     try:
+        validator = ItemDataValidator()
+        user_item_service = UserItemService()
+        price_history_service = PriceHistoryService()
+
+        item_service = ItemService(
+            validator=validator,
+            user_item_service=user_item_service,
+            price_history_service=price_history_service,
+        )
+
         logger.info("Fetching all items for index view")
-        item_list = cex.fetch_user_items(request.user)
+        item_list = item_service.get_user_items(request.user)
 
         NUMBER_OF_ITEMS_PER_PAGE = 9
         item_filter = ItemFilter(request.GET, queryset=item_list)
@@ -62,8 +76,23 @@ def detail(request, cex_id):
         return redirect("items:index")
 
     try:
+        validator = ItemDataValidator()
+        user_item_service = UserItemService()
+        price_history_service = PriceHistoryService()
+
+        item_service = ItemService(
+            validator=validator,
+            user_item_service=user_item_service,
+            price_history_service=price_history_service,
+        )
+
         logger.info("Fetching item %s for detail view", cex_id)
-        item = get_object_or_404(Item, cex_id=cex_id)
+        item = item_service.get_item_by_cex_id(cex_id=cex_id)
+
+        if not item:
+            logger.exception(f"Error fetching item by cex_id {cex_id}")
+            messages.error(request, f"Item with ID '{cex_id}' not found.")
+            return redirect("items:index")
 
         context = {
             "item": item,
@@ -71,10 +100,6 @@ def detail(request, cex_id):
         }
 
         return render(request, "items/detail.html", context)
-    except Http404 as e:
-        logger.exception("Error fetching item by item_id %s: %s", cex_id, e)
-        messages.error(request, f"Item with ID '{cex_id}' not found.")
-        return redirect("items:index")
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         messages.error(request, "Database error occurred. Please try again later.")
@@ -138,30 +163,44 @@ def add_item_from_cex(request):
 
     try:
         logger.info("Fetching item by cex_id %s", cex_id)
-        cex_data = cex.fetch_item(cex_id)
 
-        if cex_data is None:
+        validator = ItemDataValidator()
+        user_item_service = UserItemService()
+        price_history_service = PriceHistoryService()
+
+        item_service = ItemService(
+            validator=validator,
+            user_item_service=user_item_service,
+            price_history_service=price_history_service,
+        )
+        cex_service = CexService()
+
+        item_data = cex_service.fetch_item(cex_id)
+
+        if item_data is None:
             logger.error("Fetched item with cex_id %s is empty", cex_id)
             messages.warning(request, f"Item with ID '{cex_id}' does not exist.")
             return redirect("items:index")
 
-        logger.info("Creating or updating item in database")
-        item, price_history_entry = cex.create_or_update_item_and_price_history(
-            cex_data, request.user
-        )
+        existing_item = item_service.get_item_by_cex_id(item_data.cex_id)
 
-        if not item:
-            logger.info("Could not create item with ID %s", cex_id)
-            messages.error(request, f"Could not add Item with ID '{cex_id}'.")
-            return redirect("items:index")
-
-        if not price_history_entry:
-            logger.info(
-                "Could not or didn't need to create price history entry for item %s",
-                cex_id,
+        if not existing_item:
+            logger.info(f"Creating item {item_data.cex_id} in database")
+            item, _ = item_service.create_item_and_price_history(
+                item_data=item_data, user=request.user
             )
 
-        messages.info(request, f"Added {item.title}!")
+            if not item:
+                logger.info("Could not create item with ID %s", cex_id)
+                messages.error(request, f"Could not add Item with ID '{cex_id}'.")
+                return redirect("items:index")
+
+        user_owns_item = user_item_service.user_owns_item(request.user, existing_item)
+
+        if user_owns_item:
+            messages.info(request, f"You already own '{item_data.title}'.")
+            return redirect("items:index")
+        messages.info(request, f"Added {item.title}.")
         logger.info("Redirecting to items index")
         return redirect("items:index")
     except DatabaseError as e:
@@ -189,8 +228,19 @@ def delete_item(request, cex_id):
         return redirect("items:index")
 
     try:
-        logger.info("Fetching item by cex_id %s", cex_id)
-        item_deleted = cex.delete_item(cex_id, user=request.user)
+        validator = ItemDataValidator()
+        user_item_service = UserItemService()
+        price_history_service = PriceHistoryService()
+
+        item_service = ItemService(
+            validator=validator,
+            user_item_service=user_item_service,
+            price_history_service=price_history_service,
+        )
+
+        item = item_service.get_item_by_cex_id(cex_id=cex_id)
+
+        item_deleted = user_item_service.delete_user_item(item=item, user=request.user)
 
         if item_deleted:
             messages.success(request, "Deleted item successfully!")

@@ -1,26 +1,45 @@
-{% extends "allauth/layouts/base.html" %}
+{% extends 'allauth/layouts/base.html' %}
 
-{% block title %}Item Details{% endblock %}
+{% block title %}
+  Item Details
+{% endblock %}
 
 {% block content %}
-{% load crispy_forms_tags %}
-<div class="container mt-4">
-{% if item %}
-<div class="container mt-4">
-    <div class="card shadow-sm mb-4">
-        {% crispy delete_item_form delete_item_form.helper %}
+  {% load crispy_forms_tags %}
+  <div class="container mt-4">
+    {% if item %}
+      <div class="card mb-4">
         <div class="card-body">
-            <h2 class="card-title">{{ item.title }}</h2>
-            <p class="card-text"><strong>Sell Price:</strong> £{{ item.sell_price }}</p>
-            <p class="card-text"><strong>Exchange Price:</strong> £{{ item.exchange_price }}</p>
-            <p class="card-text"><strong>Cash Price:</strong> £{{ item.cash_price }}</p>
+          <div class="d-flex justify-content-between align-items-center card-title">
+            <h2 class="m-0">{{ item.title }}</h2>
+            <div class="dropdown">
+              <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"></button>
+              <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="dropdownMenuButton">
+                <li>
+                  {% crispy delete_item_form delete_item_form.helper %}
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p class="card-text">
+            <strong>Sell Price:</strong> £{{ item.sell_price }}
+          </p>
+          <p class="card-text">
+            <strong>Exchange Price:</strong> £{{ item.exchange_price }}
+          </p>
+          <p class="card-text">
+            <strong>Cash Price:</strong> £{{ item.cash_price }}
+          </p>
         </div>
+      </div>
+    {% else %}
+      <p>No item found.</p>
+    {% endif %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2>Price History</h2>
+        {% include 'items/partials/item_price_chart.html' %}
+      </div>
     </div>
-</div>
-{% else %}
-    <p>No item found.</p>
-{% endif %}
-<h2>Item Price History</h2>
-{% include 'items/partials/item_price_chart.html' %}
-</div>
+  </div>
 {% endblock %}
