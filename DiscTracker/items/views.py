@@ -200,7 +200,7 @@ def add_item_from_cex(request):
         if user_owns_item:
             messages.info(request, f"You already own '{item_data.title}'.")
             return redirect("items:index")
-        messages.info(request, f"Added {item.title}.")
+        messages.info(request, f"Added {item_data.title}.")
         logger.info("Redirecting to items index")
         return redirect("items:index")
     except DatabaseError as e:
