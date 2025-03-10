@@ -1,8 +1,3 @@
-# Creating and updating items - done
-# Fetching item details
-# Checking item availability
-# Delete Item - completely - done
-# Check Item Prices
 import logging
 from datetime import date
 from typing import Optional, Tuple

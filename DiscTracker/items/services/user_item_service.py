@@ -1,8 +1,3 @@
-# Assigning items to users
-# Deleted item/relationship
-# Checking if a user owns an item
-# Fetching all relationships
-
 import logging
 from django.db import IntegrityError, DatabaseError, transaction
 from django.contrib.auth import get_user_model

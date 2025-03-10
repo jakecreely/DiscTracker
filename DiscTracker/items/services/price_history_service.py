@@ -1,5 +1,3 @@
-# Logging price changes
-# Fetching historical data
 from datetime import date
 import logging
 from typing import Optional
