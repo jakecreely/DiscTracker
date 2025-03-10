@@ -195,14 +195,36 @@ def add_item_from_cex(request):
                 messages.error(request, f"Could not add Item with ID '{cex_id}'.")
                 return redirect("items:index")
 
-        user_owns_item = user_item_service.user_owns_item(request.user, existing_item)
-
-        if user_owns_item:
-            messages.info(request, f"You already own '{item_data.title}'.")
+            messages.info(request, f"Added {item_data.title}.")
+            logger.info("Redirecting to items index")
             return redirect("items:index")
-        messages.info(request, f"Added {item_data.title}.")
-        logger.info("Redirecting to items index")
-        return redirect("items:index")
+        else:
+            logger.info(f"Item {existing_item.title} exists")
+            user_owns_item = user_item_service.user_owns_item(
+                request.user, existing_item
+            )
+            if user_owns_item:
+                logger.info(
+                    f"User {request.user.username} already owns {existing_item.title}"
+                )
+                messages.info(request, f"You already own '{item_data.title}'.")
+                return redirect("items:index")
+            else:
+                logger.info(
+                    f"Assigning {existing_item.title} to user {request.user.username}"
+                )
+                user_existing_item = user_item_service.add_user_item(
+                    request.user, item=existing_item
+                )
+
+                if not user_existing_item:
+                    raise Exception(
+                        f"Couldn't create user item relationship between {request.user.username} and {existing_item.title}"
+                    )
+
+                messages.info(request, f"Added {item_data.title}.")
+                logger.info("Redirecting to items index")
+                return redirect("items:index")
     except DatabaseError as e:
         logger.exception("Database error occured: %s", e)
         messages.error(request, "Database error occurred. Please try again later.")
