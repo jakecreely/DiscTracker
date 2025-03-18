@@ -81,8 +81,12 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - static_volume:/app/staticfiles 
+      - /etc/letsencrypt/live/disc-tracker.co.uk:/etc/letsencrypt/live/disc-tracker.co.uk:ro
+      - /etc/letsencrypt/archive/disc-tracker.co.uk:/etc/letsencrypt/archive/disc-tracker.co.uk:ro
+      - /etc/letsencrypt/renewal:/etc/letsencrypt/renewal:ro
     depends_on:
       - app
     networks:
