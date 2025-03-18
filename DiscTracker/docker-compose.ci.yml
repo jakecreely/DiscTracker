@@ -48,17 +48,6 @@ services:
     ports:
       - '6379:6379' 
 
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: disc-tracker_nginx
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - app
-
   test:
     image: ${DOCKER_IMAGE}
     container_name: disc-tracker_tests
