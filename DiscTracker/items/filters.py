@@ -4,7 +4,7 @@ from items.models.db_models import Item
 
 class ItemFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(
-        field_name="title", lookup_expr="icontains", label="Title Contains"
+        field_name="title", lookup_expr="icontains", label="Title (Search)"
     )
     sell_price_min = django_filters.NumberFilter(
         field_name="sell_price", lookup_expr="gt", label="Minimum Sell Price"
