@@ -3,24 +3,47 @@ from items.models.db_models import Item
 
 
 class ItemFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(
+        field_name="title", lookup_expr="icontains", label="Title Contains"
+    )
+    sell_price_min = django_filters.NumberFilter(
+        field_name="sell_price", lookup_expr="gt", label="Minimum Sell Price"
+    )
+    sell_price_max = django_filters.NumberFilter(
+        field_name="sell_price", lookup_expr="lt", label="Maximum Sell Price"
+    )
+    exchange_price_min = django_filters.NumberFilter(
+        field_name="exchange_price", lookup_expr="gt", label="Minimum Exchange Price"
+    )
+    exchange_price_max = django_filters.NumberFilter(
+        field_name="exchange_price", lookup_expr="lt", label="Maximum Exchange Price"
+    )
+    cash_price_min = django_filters.NumberFilter(
+        field_name="cash_price", lookup_expr="gt", label="Minimum Cash Price"
+    )
+    cash_price_max = django_filters.NumberFilter(
+        field_name="cash_price", lookup_expr="lt", label="Maximum Cash Price"
+    )
+
     ordering = django_filters.OrderingFilter(
-        fields=(
-            ("title", "title"),
-            ("sell_price", "sell_price"),
-            ("exchange_price", "exchange_price"),
-            ("cash_price", "cash_price"),
+        choices=(
+            ("title", "Title (A-Z)"),
+            ("-title", "Title (Z-A)"),
+            ("sell_price", "Sell Price (Low to High)"),
+            ("-sell_price", "Sell Price (High to Low)"),
+            ("exchange_price", "Exchange Price (Low To High)"),
+            ("-exchange_price", "Exchange Price (High To Low)"),
+            ("cash_price", "Cash Price (Low To High)"),
+            ("-cash_price", "Cash Price (High To Low)"),
+            ("last_checked", "Last Price Change (Oldest First)"),
+            ("-last_checked", "Last Price Change (Newest First)"),
         ),
         label="Order by",
     )
 
     class Meta:
         model = Item
-        fields = {
-            "title": ["icontains"],
-            "sell_price": ["lt", "gt"],
-            "exchange_price": ["lt", "gt"],
-            "cash_price": ["lt", "gt"],
-        }
+        fields = []
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
