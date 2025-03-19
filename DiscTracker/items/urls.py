@@ -4,6 +4,9 @@ from items import views
 
 app_name = "items"
 urlpatterns = [
+    path(
+        "price-trends/", views.price_trends_view, name="price-trends"
+    ),  # View for price trends
     # ex: /items/
     path("", views.index, name="index"),
     # ex: /items/1

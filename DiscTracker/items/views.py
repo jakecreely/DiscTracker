@@ -11,11 +11,15 @@ from items.services.price_history_service import PriceHistoryService
 from items.services.user_item_service import UserItemService
 from items.validators.item_validator import ItemDataValidator
 from items.services.item_service import ItemService
-from items.models.db_models import Item, PriceHistory
+from items.models.db_models import Item, PriceHistory, UserItem
 from items.forms import AddItemForm, UpdateItemPrices, DeleteItemForm
 from items.tasks import update_prices_task
 from items.permissions import is_admin
 from items.filters import ItemFilter
+
+from django.utils.dateparse import parse_date
+from datetime import timedelta
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -366,3 +370,205 @@ def item_price_chart(request, cex_id):
             {"error": "An unexpected error occurred. Please try again later."},
             status=500,
         )
+
+
+def get_price_change_for_user(user, start_date, end_date):
+    # Create an empty list to store price changes for each item
+    price_changes = []
+
+    # Iterate over all items the user has defined (through UserItem or similar model)
+    for (
+        user_item
+    ) in user.useritem_set.all():  # Assuming useritem_set relates to UserItem model
+        item = user_item.item  # Assuming `item` is a foreign key in the UserItem model
+
+        # Get the price record closest to the start date
+        start_record = (
+            item.price_history.filter(date_checked__gte=start_date)
+            .order_by("date_checked")
+            .first()
+        )
+
+        # Get the price record closest to the end date
+        end_record = (
+            item.price_history.filter(date_checked__lte=end_date)
+            .order_by("-date_checked")
+            .first()
+        )
+
+        if start_record and end_record:
+            sell_price_change = (
+                100
+                * (end_record.sell_price - start_record.sell_price)
+                / start_record.sell_price
+            )
+            exchange_price_change = (
+                100
+                * (end_record.exchange_price - start_record.exchange_price)
+                / start_record.exchange_price
+            )
+            cash_price_change = (
+                100
+                * (end_record.cash_price - start_record.cash_price)
+                / start_record.cash_price
+            )
+
+            price_changed = (
+                sell_price_change != 0
+                or exchange_price_change != 0
+                or cash_price_change != 0
+            )
+
+            if price_changed:
+                # Append the price changes for this item to the list
+                price_changes.append(
+                    {
+                        "item": item,
+                        "start_date": start_record.date_checked,
+                        "end_date": end_record.date_checked,
+                        "sell_price_change": sell_price_change,
+                        "exchange_price_change": exchange_price_change,
+                        "cash_price_change": cash_price_change,
+                    }
+                )
+
+    return price_changes
+
+
+def get_price_trends_for_user(user, start_date, end_date):
+    # Fetch all items associated with the user
+    user_items = UserItem.objects.filter(user=user)
+
+    # Create a list to store trends for all the user's items
+    all_trends = []
+
+    for user_item in user_items:
+        # Fetch the price history for each item within the date range
+        price_history = PriceHistory.objects.filter(
+            item_id=user_item.item_id,
+            date_checked__gte=start_date,
+            date_checked__lte=end_date,
+        ).order_by("date_checked")
+
+        trends = []
+        previous_sell_price = None
+        previous_exchange_price = None
+        previous_cash_price = None
+
+        # Calculate price trends for each item
+        for record in price_history:
+            # Initialize percentage changes
+            sell_price_percentage_change = None
+            exchange_price_percentage_change = None
+            cash_price_percentage_change = None
+
+            # Calculate percentage changes
+            if previous_sell_price is not None:
+                sell_price_percentage_change = (
+                    100
+                    * (record.sell_price - previous_sell_price)
+                    / previous_sell_price
+                )
+            if previous_exchange_price is not None:
+                exchange_price_percentage_change = (
+                    100
+                    * (record.exchange_price - previous_exchange_price)
+                    / previous_exchange_price
+                )
+            if previous_cash_price is not None:
+                cash_price_percentage_change = (
+                    100
+                    * (record.cash_price - previous_cash_price)
+                    / previous_cash_price
+                )
+
+            # Append the record and the calculated trends to the list
+            trends.append(
+                {
+                    "item_id": record.item_id,
+                    "date_checked": record.date_checked,
+                    "sell_price": record.sell_price,
+                    "exchange_price": record.exchange_price,
+                    "cash_price": record.cash_price,
+                    "sell_price_percentage_change": sell_price_percentage_change,
+                    "exchange_price_percentage_change": exchange_price_percentage_change,
+                    "cash_price_percentage_change": cash_price_percentage_change,
+                }
+            )
+
+            logger.info(f"Sell Price Percentage Change: {sell_price_percentage_change}")
+            logger.info(
+                f"Exchange Price Percentage Change: {exchange_price_percentage_change}"
+            )
+            logger.info(f"Cash Price Percentage Change: {cash_price_percentage_change}")
+
+            # Update previous prices for the next iteration
+            previous_sell_price = record.sell_price
+            previous_exchange_price = record.exchange_price
+            previous_cash_price = record.cash_price
+
+        # Add trends for this particular item to the all_trends list
+        all_trends.append(
+            {
+                "user_item": user_item,  # Store the user_item object to display its details later
+                "trends": trends,
+            }
+        )
+
+    return all_trends
+
+
+@login_required
+def price_trends_view(request):
+    # Get the current user
+    user = request.user
+
+    # Get the 'start_date' and 'end_date' from the query string, and parse them into datetime.date objects
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+
+    # If no dates are provided, default to a period of 1 week ago to today
+    if not start_date_str or not end_date_str:
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(weeks=1)  # Default to 1 week range
+    else:
+        start_date = parse_date(start_date_str)
+        end_date = parse_date(end_date_str)
+
+    # Get the price trends for all the user's items within the specified date range
+    price_changes = get_price_change_for_user(user, start_date, end_date)
+
+    # Render the template with the trends and the selected date range
+    return render(
+        request,
+        "items/price_trends.html",
+        {
+            "price_changes": price_changes,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+
+# @login_required
+# def price_trends_view(request):
+#     # Get the current user
+#     user = request.user
+
+#     # Get the 'start_date' and 'end_date' from the query string, and parse them into datetime.date objects
+#     start_date_str = request.GET.get('start_date')
+#     end_date_str = request.GET.get('end_date')
+
+#     # If no dates are provided, default to a period of 1 week ago to today
+#     if not start_date_str or not end_date_str:
+#         end_date = timezone.now().date()
+#         start_date = end_date - timedelta(weeks=1)  # Default to 1 week range
+#     else:
+#         start_date = parse_date(start_date_str)
+#         end_date = parse_date(end_date_str)
+
+#     # Get the price trends for all the user's items within the specified date range
+#     all_trends = get_price_trends_for_user(user, start_date, end_date)
+
+#     # Render the template with the trends and the selected date range
+#     return render(request, 'items/price_trends.html', {'all_trends': all_trends, 'start_date': start_date, 'end_date': end_date})
